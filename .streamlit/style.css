@@ -1,0 +1,27 @@
+/* GitHub light style: gray canvas, white bordered cards, blue accent */
+[data-testid="stCode"] {
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+[data-testid="stCode"] pre {
+    background-color: #ffffff !important;
+    border-radius: 6px;
+}
+code {
+    background-color: #eff1f3;
+    border-radius: 6px;
+    padding: 0.2em 0.4em;
+}
+[data-testid="stExpander"] {
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+[data-testid="stAlert"] {
+    border-radius: 6px;
+}
+.stButton > button,
+[data-testid="stDownloadButton"] > button {
+    border-radius: 6px !important;
+}
