@@ -1,3 +1,5 @@
 streamlit
 pytest
 httpx
+fastapi
+uvicorn
