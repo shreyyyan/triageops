@@ -1,0 +1,49 @@
+--- a/victim-service/app.py
++++ b/victim-service/app.py
+@@ -57,7 +57,7 @@ def apply_tax(subtotal: float, region: Optional[str]) -> float:
+     # BUG 1: KeyError when region is missing (None) or unknown.
+     # Correct behaviour: fall back to a 0.0 rate.
+-    rate = TAX_RATES[region]
++    rate = TAX_RATES.get(region, 0.0)
+     return round(subtotal * rate, 2)
+
+---
+
+## Safety Rationale
+
+### What could regress
+
+**Nothing should regress for valid regions.**  
+`dict.get(key, default)` returns the mapped value when the key exists, so
+every request that today succeeds (`region` ∈ {"NP", "US", "IN"}) will
+continue to receive exactly the same tax rate. The return type and rounding
+logic (`round(subtotal * rate, 2)`) are untouched. There are no other callers
+of `apply_tax` in the codebase.
+
+The only observable behaviour change is the fallback path:
+
+| Input before fix       | Outcome before | Outcome after     |
+|------------------------|---------------|-------------------|
+| `region=None`          | `KeyError` → HTTP 500 | `rate=0.0` → HTTP 200, `tax=0.0` |
+| `region="XX"` (unknown)| `KeyError` → HTTP 500 | `rate=0.0` → HTTP 200, `tax=0.0` |
+| `region="NP"/"US"/"IN"`| correct rate  | identical — no change |
+
+One minor semantic note: a client supplying an *unrecognised* region code
+will now silently receive 0 % tax rather than an error. If the caller is
+supposed to be informed that their region is invalid, an explicit `HTTPException`
+would be better; however the RCA, the in-code comment on line 59, and both
+tests (`test_missing_region_defaults_tax_to_zero`, `test_unknown_region_defaults_tax_to_zero`)
+all specify the 0.0 fallback as the **intended** correct behaviour, so this
+is not a regression — it is the documented contract.
+
+### Tests that cover the changed lines
+
+| Test | File | What it checks |
+|------|------|----------------|
+| `test_missing_region_defaults_tax_to_zero` | `victim-service/tests/test_orders.py:70` | `region` omitted → HTTP 200, `tax == 0.0`, `total == subtotal` |
+| `test_unknown_region_defaults_tax_to_zero` | `victim-service/tests/test_orders.py:80` | `region="XX"` → HTTP 200, `tax == 0.0` |
+| `test_create_order_happy_path`             | `victim-service/tests/test_orders.py:42` | `region="NP"` → subtotal 20.0, tax 2.6, total 22.6 (no regression) |
+| `test_get_order_roundtrip`                 | `victim-service/tests/test_orders.py:53` | End-to-end order survives GET after POST (valid region, no regression) |
+
+The first two tests are currently **failing** (BUG 1) and will turn green
+after this patch. The last two are currently passing and must remain green.
