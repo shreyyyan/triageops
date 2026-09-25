@@ -63,9 +63,14 @@ st.sidebar.markdown(
     "prompts are in `prompts/bob_tasks.md`."
 )
 
-run = st.sidebar.button("Run triage", type="primary", use_container_width=True)
+if "triage_run" not in st.session_state:
+    st.session_state.triage_run = False
 
+run = st.sidebar.button("Run triage", type="primary", use_container_width=True)
 if run:
+    st.session_state.triage_run = True
+
+if st.session_state.triage_run:
     alert = parse_alert(incident_json)
 
     # ------------------------------------------------- Stage 1: alert ----
