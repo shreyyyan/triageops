@@ -1,0 +1,48 @@
+2026-09-25T13:58:02Z INFO victim-service order created id=881 total=22.60
+2026-09-25T13:58:19Z INFO victim-service order created id=882 total=11.30
+2026-09-25T13:58:44Z INFO victim-service charging payment amount=22.60 mode=live
+2026-09-25T13:59:01Z INFO victim-service order created id=883 total=22.60
+2026-09-25T13:59:33Z INFO victim-service order created id=884 total=45.20
+2026-09-25T14:00:05Z INFO victim-service charging payment amount=11.30 mode=live
+2026-09-25T14:00:12Z INFO victim-service order created id=885 total=11.30
+2026-09-25T14:00:40Z WARNING victim-service elevated 5xx rate on POST /orders (2 in last 60s)
+2026-09-25T14:00:41Z INFO victim-service charging payment amount=33.90 mode=live
+2026-09-25T14:00:58Z INFO victim-service order created id=886 total=33.90
+2026-09-25T14:01:20Z ERROR victim-service unhandled exception on POST /orders
+Traceback (most recent call last):
+  File "victim-service/app.py", line 97, in create_order
+    tax = apply_tax(subtotal, order.region)
+  File "victim-service/app.py", line 60, in apply_tax
+    rate = TAX_RATES[region]
+KeyError: None
+2026-09-25T14:01:21Z INFO uvicorn.access 10.4.2.18:51230 - "POST /orders HTTP/1.1" 500
+2026-09-25T14:01:33Z INFO victim-service charging payment amount=22.60 mode=live
+2026-09-25T14:01:40Z INFO victim-service order created id=887 total=22.60
+2026-09-25T14:01:55Z ERROR victim-service unhandled exception on POST /orders
+Traceback (most recent call last):
+  File "victim-service/app.py", line 97, in create_order
+    tax = apply_tax(subtotal, order.region)
+  File "victim-service/app.py", line 60, in apply_tax
+    rate = TAX_RATES[region]
+KeyError: None
+2026-09-25T14:01:56Z INFO uvicorn.access 10.4.2.18:51231 - "POST /orders HTTP/1.1" 500
+2026-09-25T14:02:02Z WARNING victim-service elevated 5xx rate on POST /orders (5 in last 300s)
+2026-09-25T14:02:11Z ERROR victim-service unhandled exception on POST /orders
+Traceback (most recent call last):
+  File "victim-service/app.py", line 97, in create_order
+    tax = apply_tax(subtotal, order.region)
+  File "victim-service/app.py", line 60, in apply_tax
+    rate = TAX_RATES[region]
+KeyError: None
+2026-09-25T14:02:12Z INFO uvicorn.access 10.4.2.18:51232 - "POST /orders HTTP/1.1" 500
+2026-09-25T14:02:12Z CRITICAL alertmanager ALERT victim-service 5xx spike: KeyError on POST /orders (INC-2026-1042)
+2026-09-25T14:02:20Z INFO victim-service charging payment amount=56.50 mode=live
+2026-09-25T14:02:27Z INFO victim-service order created id=888 total=56.50
+2026-09-25T14:02:44Z ERROR victim-service unhandled exception on POST /orders
+Traceback (most recent call last):
+  File "victim-service/app.py", line 97, in create_order
+    tax = apply_tax(subtotal, order.region)
+  File "victim-service/app.py", line 60, in apply_tax
+    rate = TAX_RATES[region]
+KeyError: None
+2026-09-25T14:02:45Z INFO uvicorn.access 10.4.2.18:51233 - "POST /orders HTTP/1.1" 500

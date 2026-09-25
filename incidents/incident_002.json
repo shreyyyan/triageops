@@ -1,0 +1,1 @@
+{"alert_id":"INC-2026-1043","customer_impact":"No customer-facing errors, but bulk orders are undercharged by ~10%. Estimated revenue impact $1,240 over the last 7 days.","endpoint":"POST /orders","error_signature":"BULK_DISCOUNT_ANOMALY","service":"victim-service","severity":"high","timestamp":"2026-09-25T09:15:00Z","traceback":null}

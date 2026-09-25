@@ -1,0 +1,1 @@
+{"alert_id":"INC-2026-1044","customer_impact":"All order attempts failing since the 16:40Z deploy. Checkout fully down in the affected environment; ~340 failed attempts.","endpoint":"POST /orders","error_signature":"PaymentError","service":"victim-service","severity":"critical","timestamp":"2026-09-25T16:47:33Z","traceback":null}

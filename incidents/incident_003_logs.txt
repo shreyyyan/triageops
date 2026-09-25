@@ -1,0 +1,30 @@
+2026-09-25T16:38:02Z INFO victim-service order created id=901 total=22.60
+2026-09-25T16:38:19Z INFO victim-service charging payment amount=22.60 mode=live
+2026-09-25T16:38:44Z INFO victim-service order created id=902 total=11.30
+2026-09-25T16:39:55Z INFO deploy deployer=ci-bot artifact=victim-service:1.14.0 env=staging
+2026-09-25T16:40:03Z INFO deploy env change PAYMENTS_MODE: live -> sandbox (reason: "staging QA")
+2026-09-25T16:40:11Z INFO victim-service service restarted pid=4412
+2026-09-25T16:41:02Z INFO victim-service charging payment amount=22.60 mode=sandbox
+2026-09-25T16:41:02Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:41:03Z INFO uvicorn.access 10.4.9.2:41002 - "POST /orders HTTP/1.1" 502
+2026-09-25T16:41:20Z INFO victim-service charging payment amount=11.30 mode=sandbox
+2026-09-25T16:41:20Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:41:21Z INFO uvicorn.access 10.4.9.2:41003 - "POST /orders HTTP/1.1" 502
+2026-09-25T16:42:02Z WARNING victim-service elevated 5xx rate on POST /orders (8 in last 120s)
+2026-09-25T16:42:33Z INFO victim-service charging payment amount=33.90 mode=sandbox
+2026-09-25T16:42:33Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:42:34Z INFO uvicorn.access 10.4.9.2:41004 - "POST /orders HTTP/1.1" 502
+2026-09-25T16:43:55Z INFO victim-service charging payment amount=45.20 mode=sandbox
+2026-09-25T16:43:55Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:43:56Z INFO uvicorn.access 10.4.9.2:41005 - "POST /orders HTTP/1.1" 502
+2026-09-25T16:44:20Z WARNING victim-service elevated 5xx rate on POST /orders (21 in last 300s)
+2026-09-25T16:45:01Z INFO victim-service charging payment amount=22.60 mode=sandbox
+2026-09-25T16:45:01Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:45:02Z INFO uvicorn.access 10.4.9.2:41006 - "POST /orders HTTP/1.1" 502
+2026-09-25T16:46:12Z INFO victim-service charging payment amount=56.50 mode=sandbox
+2026-09-25T16:46:12Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:46:13Z INFO uvicorn.access 10.4.9.2:41007 - "POST /orders HTTP/1.1" 502
+2026-09-25T16:47:33Z CRITICAL alertmanager ALERT victim-service 5xx spike: PaymentError on POST /orders (INC-2026-1044)
+2026-09-25T16:48:02Z INFO victim-service charging payment amount=11.30 mode=sandbox
+2026-09-25T16:48:02Z ERROR victim-service payment failed: sandbox gateway declined the charge
+2026-09-25T16:48:03Z INFO uvicorn.access 10.4.9.2:41008 - "POST /orders HTTP/1.1" 502

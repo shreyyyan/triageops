@@ -1,0 +1,29 @@
+2026-09-25T08:41:02Z INFO victim-service order created id=812 total=108.00
+2026-09-25T08:41:19Z INFO victim-service order created id=813 total=22.60
+2026-09-25T08:42:55Z INFO victim-service order created id=814 total=97.20
+2026-09-25T08:44:10Z INFO victim-service order created id=815 total=194.40
+2026-09-25T08:45:31Z INFO victim-service order created id=816 total=11.30
+2026-09-25T08:47:02Z INFO victim-service order created id=817 total=97.20
+2026-09-25T08:48:19Z INFO victim-service order created id=818 total=56.50
+2026-09-25T08:49:44Z INFO victim-service order created id=819 total=194.40
+2026-09-25T08:51:03Z INFO victim-service order created id=820 total=33.90
+2026-09-25T08:52:27Z INFO victim-service order created id=821 total=97.20
+2026-09-25T08:53:50Z INFO victim-service order created id=822 total=11.30
+2026-09-25T08:55:12Z INFO victim-service order created id=823 total=194.40
+2026-09-25T08:56:36Z INFO victim-service order created id=824 total=22.60
+2026-09-25T08:58:01Z INFO victim-service order created id=825 total=97.20
+2026-09-25T08:59:25Z INFO victim-service order created id=826 total=45.20
+2026-09-25T09:00:00Z INFO finance-recon nightly job started window=7d service=victim-service
+2026-09-25T09:04:12Z INFO finance-recon scanned 312 orders
+2026-09-25T09:11:47Z WARNING finance-recon BULK_DISCOUNT_ANOMALY order=814 qty=12 unit=10.00 expected_subtotal=108.00 actual_subtotal=97.20
+2026-09-25T09:11:47Z WARNING finance-recon BULK_DISCOUNT_ANOMALY order=815 qty=24 unit=9.00 expected_subtotal=194.40 actual_subtotal=174.96
+2026-09-25T09:11:48Z WARNING finance-recon BULK_DISCOUNT_ANOMALY order=817 qty=12 unit=10.00 expected_subtotal=108.00 actual_subtotal=97.20
+2026-09-25T09:11:48Z WARNING finance-recon BULK_DISCOUNT_ANOMALY order=819 qty=24 unit=9.00 expected_subtotal=194.40 actual_subtotal=174.96
+2026-09-25T09:11:48Z WARNING finance-recon BULK_DISCOUNT_ANOMALY order=821 qty=12 unit=10.00 expected_subtotal=108.00 actual_subtotal=97.20
+2026-09-25T09:11:48Z WARNING finance-recon BULK_DISCOUNT_ANOMALY order=823 qty=24 unit=9.00 expected_subtotal=194.40 actual_subtotal=174.96
+2026-09-25T09:11:49Z WARNING finance-recon pattern: every order with total quantity > 10 is undercharged by exactly one extra 10% discount
+2026-09-25T09:12:03Z WARNING finance-recon 6 anomalous orders in window, total leakage=$68.04 (7d projection ~$1,240)
+2026-09-25T09:15:00Z CRITICAL alertmanager ALERT victim-service revenue anomaly: BULK_DISCOUNT_ANOMALY (INC-2026-1043)
+2026-09-25T09:15:20Z INFO victim-service order created id=827 total=22.60
+2026-09-25T09:16:41Z INFO victim-service order created id=828 total=97.20
+2026-09-25T09:18:02Z INFO victim-service order created id=829 total=11.30
