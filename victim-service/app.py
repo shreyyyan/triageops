@@ -57,7 +57,7 @@ class PaymentError(Exception):
 def apply_tax(subtotal: float, region: Optional[str]) -> float:
     # BUG 1: KeyError when region is missing (None) or unknown.
     # Correct behaviour: fall back to a 0.0 rate.
-    rate = TAX_RATES[region]
+    rate = TAX_RATES.get(region, 0.0)
     return round(subtotal * rate, 2)
 
 
