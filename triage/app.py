@@ -25,9 +25,6 @@ from triage_core import correlate_logs, locate_code, parse_alert, run_tests  # n
 
 st.set_page_config(page_title="TriageOps", layout="wide")
 
-_css = ROOT / ".streamlit" / "style.css"
-if _css.exists():
-    st.markdown(f"<style>{_css.read_text()}</style>", unsafe_allow_html=True)
 
 
 INCIDENT_META = {
