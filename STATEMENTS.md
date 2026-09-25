@@ -1,78 +1,25 @@
-# Submission statements — FINAL
+# TriageOps — Submission Statements
 
-> Each statement is 500 words or less, per the submission requirements.
-> Paste into the lablab.ai submission form as-is, or lightly adapt to your voice.
+## Problem & Solution
 
----
+At 2 a.m., a PagerDuty alert fires: POST /orders is returning 500s. The on-call engineer opens the alert, greps through thousands of log lines, reconstructs a timeline by hand, traces the fault through unfamiliar code, guesses at a fix, and then has to prove the fix works — a 20-to-40-minute loop of mechanical, error-prone work. Three of the most common bug classes make it worse: crashes with stack traces, silent logic bugs that produce wrong numbers without crashing, and config mistakes visible only after deploy. Multiply that loop by every incident, every team, every week.
 
-## 1. Problem & Solution Statement (326 words)
+TriageOps compresses that loop into a guided workflow measured in minutes. Feed it an incident alert (JSON) and the service's logs. A deterministic Python pipeline — deliberately not an LLM, so it never invents evidence — parses the alert, correlates the matching log lines with surrounding context, resolves every traceback frame to an exact file:line in the repository, and runs the project's pytest suite to establish the failing baseline. Then IBM Bob takes over inside the IDE as the reasoning engine: it triages the alert into a timeline with ranked hypotheses, traces the exact faulty code path, proposes a minimal fix as a reviewable diff, applies it, and iterates against the real test suite until the incident's tests go green. The pipeline then renders a one-page incident report — timeline, evidence, root cause, fix, verification — the artifact an on-call engineer would otherwise write by hand.
 
-Incident triage dominates on-call toil. When an alert fires, an engineer must
-read the alert, grep through logs, reconstruct a timeline, trace the fault
-through unfamiliar code, propose a fix, and then prove the fix works — usually
-against the clock, at night, under pressure. For three of the most common bug
-classes — crashes with stack traces, silent logic errors that never raise, and
-configuration mistakes that only surface after a deploy — that manual loop
-takes tens of minutes even for experienced engineers, and far longer for
-anyone new to the codebase. Every minute of it extends customer impact.
+We proved it on a seeded FastAPI service carrying three real bug classes. On incident INC-2026-1042, a KeyError crash on POST /orders, Bob traced the fault to a single dictionary lookup at victim-service/app.py:60, proposed a one-line fix (TAX_RATES.get(region, 0.0)), applied it, and moved the suite from 5 passed / 4 failed to 7 passed / 2 failed — the two remaining failures belonging to two other seeded incidents, deliberately kept separate. The business value is straightforward: faster mean time to recovery, fixes verified by tests instead of hope, and a paper trail (every Bob session screenshotted and committed) that turns tribal debugging knowledge into a repeatable process. Stated honestly, the "minutes, not tens of minutes" claim is measured on our seeded incidents, not production outages — but the workflow is exactly the one production teams run, minus the toil.
 
-TriageOps compresses that loop into a guided, evidence-backed workflow. Given
-an incident alert and the service logs, a deterministic Python pipeline parses
-the alert, correlates the matching log lines with surrounding context, resolves
-traceback frames to exact file-and-line locations in the repository, and runs
-the project's test suite to establish a failing baseline. That evidence feeds a
-Streamlit dashboard that walks the responder through seven stages: alert,
-evidence, code locations, root-cause analysis, proposed fix, live test
-verification, and a downloadable incident report.
+## IBM Bob Usage
 
-The reasoning steps — the root-cause trace, the minimal fix proposal, and the
-fix-verify iteration — run in IBM Bob IDE in Agent mode, with the session
-summaries committed as evidence. Bob works on the real repository, cites real
-file-and-line references, and iterates against the real pytest suite until it
-goes green.
+IBM Bob is the reasoning core of TriageOps — not a code-completion accessory, but the agent that performs the incident-triage loop no deterministic pipeline can: hypothesize, trace, fix, verify, report. All work ran on the hackathon-provisioned account (team ibm-hackathon-lablab), and every task's session consumption summary is screenshotted under bob_sessions/.
 
-On our three seeded incidents, the workflow moves from alert to a verified fix
-in minutes instead of tens of minutes, and the incident report it produces is
-the same artefact an on-call engineer would otherwise write by hand at 3am.
-TriageOps does not replace the responder's judgment; it removes the mechanical
-triage work so judgment can be applied faster. The next step is pointing the
-same pipeline at real services, where the only change is the incident feed.
+Task 1 (Ask mode) — incident intake. We pasted the alert payload and correlated logs for INC-2026-1042; Bob produced a minute-by-minute timeline, three ranked root-cause hypotheses with file:line evidence for each, and a one-sentence most-likely cause. This replaced the manual "read the alert, grep the logs" phase.
 
----
+Task 2 (Agent mode) — root-cause trace. Working in victim-service/, Bob followed the request path from the POST /orders endpoint through every function call to the exception, confirming each step against the traceback frames, and wrote triage/reports/root_cause_001.md: the faulty call chain, why region arrived as None, the blast radius (which requests crash, which don't), and the minimal correct behavior. Analysis only — no code changed.
 
-## 2. IBM Bob Usage Statement (356 words)
+Task 3 (Agent mode) — fix proposal. From the root-cause report, Bob proposed the minimal change in victim-service/app.py, wrote the unified diff to triage/fixes/fix_001.diff without applying it, and added a safety rationale: what could regress and which existing tests cover the changed lines.
 
-IBM Bob IDE is the reasoning engine of TriageOps; the deterministic pipeline
-only gathers evidence and never invents analysis. All five Bob tasks ran on the
-hackathon-provisioned Bob account, and every task's session consumption summary
-is committed under `bob_sessions/`.
+Task 4 (Agent mode) — apply and verify. Bob applied the diff, ran python -m pytest victim-service/tests/ -v, and reported exact before/after counts: 5 passed / 4 failed → 7 passed / 2 failed, with the two remaining failures correctly attributed to separate seeded incidents (002/003) left untouched per instructions. No test expectations were modified.
 
-Task 1 used Ask mode for incident intake: we pasted the alert JSON and the
-service logs and asked Bob for a minute-by-minute timeline plus three ranked
-root-cause hypotheses, each backed by file-and-line evidence. This replaced
-the manual first stretch of triage — reading logs and forming hypotheses.
+Task 5 (Agent mode) — incident report. Bob synthesized the alert, logs, root-cause report, diff, and test results into a one-page factual report at triage/reports/incident_INC-2026-1042_report.md, marking uncertain items as uncertain rather than inventing data.
 
-Tasks 2 through 5 used Agent mode against the real repository. In Task 2, Bob
-traced the exact faulty call chain from the POST /orders endpoint to the
-raising line, confirming each step against the traceback frames, and wrote the
-analysis to `triage/reports/root_cause_001.md` — exercising document
-understanding across the alert, the logs, and the codebase. In Task 3, Bob
-proposed a minimal unified diff with a safety rationale, saved to
-`triage/fixes/fix_001.diff` without applying it. In Task 4, Bob applied the
-diff, ran the pytest suite, and iterated on the fix until all tests passed,
-reporting exact before/after counts: four failing tests on the seeded code,
-the full suite green after the fix.
-
-Task 5 had Bob compose the final incident report from the evidence, the
-root-cause analysis, the diff, and the verified test results — a one-page
-artefact with timeline, evidence, root cause, fix, and verification.
-
-We managed the 40-Bobcoin budget with strict discipline: one task per goal so
-each session summary is clean submission evidence, pasting the incident data
-once and referencing files afterwards, and reusing the same workspace so
-repository context stayed warm. Agent mode handled the multi-step
-trace-fix-verify loop; Ask mode handled the analytical intake. The subagent
-pattern maps directly onto our staged pipeline: each stage has one job, and
-Bob's reasoning stages plug into the dashboard where the deterministic stages
-leave off. Without Bob, TriageOps is an evidence viewer; with Bob, it is a
-working triage assistant.
+Total Bobcoin spend stayed well under the 40-coin allocation. The division of labor is deliberate: the deterministic pipeline gathers evidence it cannot hallucinate; Bob does the reasoning, and every claim it makes is anchored to a file, a line, or a test result.

@@ -1,50 +1,45 @@
-# Demo script — 3-minute video plan
+# TriageOps — Demo Video Plan
 
-Total: 3:00 max. At least 0:90 must show the solution live on screen.
-Narration cues are in italics; on-screen actions are in plain text.
+Total: 3:00 max. At least 90 seconds must show the working solution live on screen, with narration throughout.
 
-## 0:00–0:30 — The problem (30s)
+## 0:00–0:20 — The problem
 
-*On screen: a terminal tailing victim-service logs with 500 errors scrolling.*
+On screen: the TriageOps dashboard open in the browser.
 
-- *"Every on-call engineer knows this moment. It's 2am, the alert fires, and the clock starts."*
-- *"Mean time to resolution is dominated by triage: reading the alert, grepping logs, tracing the code, guessing the fix, then proving it. For these three bug classes — a crash, a silent logic bug, a bad config — that manual loop is 20 to 40 minutes of expert work."*
-- *"TriageOps compresses that loop: deterministic evidence gathering plus IBM Bob reasoning in the IDE."*
+"Every developer knows this moment. It's 2 AM, an alert fires, the checkout service is crashing. Normally that's 30 minutes of reading logs and guessing. TriageOps changes that."
 
-## 0:30–2:00 — Live demo (90s)
+## 0:20–1:10 — Live demo: the dashboard
 
-*On screen: `streamlit run triage/app.py`, incident_001 selected.*
+On screen: `streamlit run triage/app.py`.
 
-1. **Stages 1–3 (25s)** — Click "Run triage".
-   - *"The alert is parsed: service, endpoint, error signature, severity. Log lines are correlated around the incident window. The traceback frames resolve to exact file-and-line locations in the repo."*
-2. **Stage 4 (15s)** — Scroll to the root-cause panel.
-   - *"The root-cause analysis was produced by IBM Bob in Agent mode — Task 2. Bob traced the call chain from the endpoint to the faulty line."*
-3. **Stage 5 (10s)** — Show the diff.
-   - *"Task 3: Bob proposed this minimal diff, with a safety rationale."*
-4. **Stage 6 (25s)** — Click "Run test suite now". Show the red run first if pre-fix, then the green run.
-   - *"Task 4: Bob applied the fix and iterated until the suite went green. Four failing tests before, all passing after. Nothing was faked — this is the real pytest run."*
-5. **Stage 7 (15s)** — Show the rendered incident report; click Download.
-   - *"And the pipeline renders the incident report: timeline, evidence, root cause, verification."*
+- Sidebar: select incident 001, click **Run triage**.
+- Stage 1 — Alert parsed: the alert payload, structured.
+- Stage 2 — Log evidence: 37 matching log lines around the incident window.
+- Stage 3 — Code locations: traceback frames resolved to `victim-service/app.py:60`.
+- Stage 6 — Test verification: click **Run test suite now** — 7 passed, 2 failed (the 2 failures are separate seeded incidents, intentionally untouched).
+- Stage 7 — Incident report: download the rendered report.
 
-## 2:00–2:45 — Bob evidence (45s)
+## 1:10–2:20 — Bob IDE: the core
 
-*On screen: Bob IDE with the task list open; then the `bob_sessions/` folder.*
+On screen: Bob IDE. This section is the heart of the video — do not shorten it.
 
-- *"Every reasoning step ran in IBM Bob IDE on the hackathon account. Five tasks: intake in Ask mode, then root-cause trace, fix proposal, verification, and the incident report in Agent mode."*
-- Open one task session summary; show the consumption summary.
-- *"The session summaries are committed in `bob_sessions/` — that is our evidence of Bob usage."*
+- Tasks panel: all 5 tasks.
+- Task 1: timeline + 3 ranked hypotheses from the alert and logs.
+- `triage/reports/root_cause_001.md`: the traced call chain and blast radius.
+- `triage/fixes/fix_001.diff`: the one-line fix — `TAX_RATES[region]` → `TAX_RATES.get(region, 0.0)`.
+- Task 4: before/after — 5 passed / 4 failed → 7 passed / 2 failed.
+- Live terminal: `python -m pytest victim-service/tests/ -v`.
+- `triage/reports/incident_INC-2026-1042_report.md`: the final report.
 
-## 2:45–3:00 — Impact and close (15s)
+## 2:20–2:45 — Close
 
-*On screen: the repo README architecture diagram or the closing slide.*
+On screen: `github.com/shreyyyan/triageops`, then the `bob_sessions/` folder.
 
-- *"TriageOps turns a 30-minute manual triage loop into a guided, evidence-backed workflow measured in minutes — on real, seeded incidents, with the fix verified by the test suite."*
-- *"Incident triage is the debugging workflow every team dreads. We built the assistant we wish we had on call."*
-- End card: project title, repo URL, team.
+"TriageOps turns a 30-minute panic into a guided workflow. The pipeline gathers the evidence, Bob does the reasoning, the fix is proven by tests. All five Bob sessions are saved in the repo."
 
-## Recording tips
+## Recording notes
 
-- Record at 1080p, terminal and browser zoomed to 125%+.
-- Do the pytest run once before recording so you know the timing.
-- Keep narration tight: rehearse the 90-second demo block twice.
-- If anything is slow live, it is fine to cut between the stages — judges care that the solution is real, not that it is one unbroken take.
+- 1080p, browser and terminal zoomed to 125%+.
+- Narrate each action before doing it; pause half a second, then click.
+- Do 3–4 takes; trim dead air at the start and end.
+- If a take runs long, trim the dashboard walkthrough — never the Bob section.

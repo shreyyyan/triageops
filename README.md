@@ -21,7 +21,8 @@ Feed it an incident alert + service logs. It:
 3. Resolves traceback frames to exact `file:line` locations in the repo.
 4. Runs the project's test suite to establish the failing baseline.
 5. Hands the evidence to **IBM Bob in the IDE**, which traces the root cause,
-   proposes a minimal fix, applies it, and iterates until tests go green.
+   proposes a minimal fix, applies it, and iterates until the incident's
+   tests pass.
 6. Renders a downloadable incident report: timeline, evidence, root cause,
    fix, verification.
 
@@ -68,7 +69,8 @@ pip install -r triage/requirements.txt   # streamlit for the dashboard
 # 2. Run the victim service (the "production" app)
 cd victim-service && uvicorn app:app --port 8000
 
-# 3. Run the test suite (4 tests FAIL on the seeded bugs — that is the point)
+# 3. Run the test suite (2 tests fail on the remaining seeded bugs —
+#    incidents 002/003; incident 001's tests were fixed via Bob in Task 4)
 python -m pytest victim-service/tests/ -v
 
 # 4. Run the deterministic pipeline headlessly
@@ -93,43 +95,42 @@ In Bob IDE, on the **hackathon-provisioned account**, run the prompts in
 1. **Incident intake** (Ask mode) — timeline + ranked hypotheses from the alert and logs.
 2. **Root-cause trace** (Agent mode) — exact faulty code path, saved to `triage/reports/root_cause_001.md`.
 3. **Fix proposal** (Agent mode) — minimal diff + safety rationale, saved to `triage/fixes/fix_001.diff`.
-4. **Verify** (Agent mode) — apply the fix, run pytest, iterate to green.
+4. **Verify** (Agent mode) — apply the fix, run pytest, iterate until the incident's tests pass.
 5. **Incident report** (Agent mode) — final one-page markdown report.
 
 Screenshot each task's session consumption summary into `bob_sessions/`
-(see `bob_sessions/README.md`). Bobcoins are capped at 40 per person — the
-prompts include a discipline note.
+(see `bob_sessions/README.md`).
 
 ## How to demo
 
-Follow `DEMO_SCRIPT.md` (shot-by-shot 3-minute plan). The short version:
+Follow `DEMO_SCRIPT.md` (3-minute video plan). The short version:
 
 1. `streamlit run triage/app.py`, select incident 001, click **Run triage**.
 2. Walk stages 1–3 (alert, logs, code locations).
 3. Show Bob's root-cause analysis and fix diff (stages 4–5).
-4. Click **Run test suite now** — show the red-to-green transition (stage 6).
+4. Click **Run test suite now** — live pytest run (stage 6).
 5. Download the incident report (stage 7), then show the `bob_sessions/` evidence.
 
 ## Impact framing
 
 Manual triage of these three bug classes is a 20–40 minute loop of reading,
 grepping, tracing, and guessing, even for engineers who know the codebase.
-TriageOps reduces it to a guided workflow measured in minutes: on our three
-seeded incidents, the pipeline gathers all evidence in seconds, Bob's
-trace-fix-verify loop runs against the real repo and the real test suite, and
-the report it produces is the artefact an on-call engineer would otherwise
-write by hand. Stated honestly: the "minutes, not tens of minutes" claim is
-measured on the seeded incidents in this repo, not on production outages.
+TriageOps reduces it to a guided workflow measured in minutes: the pipeline
+gathers all evidence in seconds, Bob's trace-fix-verify loop runs against the
+real repo and the real test suite, and the report it produces is the artefact
+an on-call engineer would otherwise write by hand. Stated honestly: the
+"minutes, not tens of minutes" claim is measured on the seeded incidents in
+this repo, not on production outages.
 
 ## Repo map
 
 - `victim-service/` — the sample FastAPI app with 3 seeded bugs + pytest suite
 - `triage/` — `triage_core.py` (deterministic pipeline), `app.py` (Streamlit demo UI)
 - `incidents/` — 3 synthetic incident payloads (alert JSON + logs each)
-- `prompts/bob_tasks.md` — the 5 copy-paste Bob IDE task prompts
+- `prompts/bob_tasks.md` — the 5 Bob IDE task prompts
 - `bob_sessions/` — Bob task session screenshots (required deliverable)
 - `DEMO_SCRIPT.md` — 3-minute video plan
-- `STATEMENTS.md` — draft problem/solution + Bob usage statements (rewrite before submitting)
+- `STATEMENTS.md` — submission statements: problem/solution and IBM Bob usage
 - `DATA_SOURCES.md` — dataset compliance statement
 
 ## How IBM Bob was used
