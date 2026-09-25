@@ -1,22 +1,22 @@
-/* GitHub light style: gray canvas, white bordered cards, blue accent */
+/* GitHub dark style: dark canvas, bordered cards, green accent */
 [data-testid="stCode"] {
-    border: 1px solid #d1d9e0;
+    border: 1px solid #30363d;
     border-radius: 6px;
-    background-color: #ffffff;
+    background-color: #161b22;
 }
 [data-testid="stCode"] pre {
-    background-color: #ffffff !important;
+    background-color: #161b22 !important;
     border-radius: 6px;
 }
 code {
-    background-color: #eff1f3;
+    background-color: #343942;
     border-radius: 6px;
     padding: 0.2em 0.4em;
 }
 [data-testid="stExpander"] {
-    border: 1px solid #d1d9e0;
+    border: 1px solid #30363d;
     border-radius: 6px;
-    background-color: #ffffff;
+    background-color: #161b22;
 }
 [data-testid="stAlert"] {
     border-radius: 6px;
