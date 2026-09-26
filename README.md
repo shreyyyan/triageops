@@ -33,7 +33,7 @@ Bob's, with session screenshots committed under `bob_sessions/`.
 
 ## Custom alert mode
 
-Beyond the three bundled incidents, the dashboard accepts any alert JSON
+Beyond the four bundled incidents, the dashboard accepts any alert JSON
 plus optional log lines and runs the deterministic pipeline live on them.
 If the alert matches a known incident signature, Bob's previously generated
 diagnosis and fix proposal for it are shown (clearly labelled as prior Bob
@@ -83,7 +83,7 @@ actual upstream fix.
 ```bash
 # 1. Install dependencies
 pip install -r victim-service/requirements.txt
-pip install -r triage/requirements.txt   # streamlit for the dashboard
+pip install -r requirements.txt   # streamlit for the dashboard
 
 # 2. Run the victim service (the "production" app)
 cd victim-service && uvicorn app:app --port 8000

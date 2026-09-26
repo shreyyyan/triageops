@@ -9,7 +9,7 @@ verbatim so Bob can diagnose third-party code, not just our seeded bugs.
   (`python-humanize/humanize`), MIT licensed, by Hugo van Kemenade and contributors.
 - **Vendored version:** 4.3.0 â€” copied byte-for-byte from the official PyPI
   release (only the top-level directory was placed under `triage/realworld/`;
-  no source file was modified).
+  pristine at intake — Bob's fix was applied to `humanize/number.py` in Task 15 (see `triage/fixes/fix_004.diff`).
 - **The bug:** [`humanize.metric(0)` crashes](https://github.com/python-humanize/humanize/issues/57)
   with `ValueError: math domain error`.
 - **Upstream fix:** [PR #47](https://github.com/python-humanize/humanize/pull/47),
@@ -24,7 +24,7 @@ verbatim so Bob can diagnose third-party code, not just our seeded bugs.
 python triage/realworld/repro_metric_zero.py
 ```
 
-Expected on 4.3.0: `ValueError: math domain error` from
+Expected on 4.3.0: `ValueError: math domain error` (on Python 3.14 the message reads `ValueError: expected a positive input` — same exception, same line) from
 `humanize/number.py:511`, in `metric()`.
 
 ## How Bob uses it (Tasks 12â€“16)

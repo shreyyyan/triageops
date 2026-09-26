@@ -68,7 +68,7 @@ def match_known_incident(alert):
         return "002"
     if "payment" in sig:
         return "003"
-    if "math domain error" in tb:
+    if "math domain error" in tb or "humanize" in tb or "metric(" in tb:
         return "004"
     return None
 
@@ -200,6 +200,18 @@ if st.session_state.triage_run:
     # ------------------------------------------------- Stage 3: code ----
     stage_header(3, "Code locations (from traceback)")
     locations = locate_code(VICTIM, alert.get("traceback") or "")
+    # Frames outside victim-service (e.g. incident 004's vendored
+    # dependency) fall back to a repo-root search so they resolve
+    # instead of showing MISSING.
+    _tb = alert.get("traceback") or ""
+    _unresolved = [loc for loc in locations if not loc["exists"]]
+    if _unresolved:
+        _fb = {(l["frame_path"], l["line"]): l for l in locate_code(ROOT, _tb)}
+        for _loc in _unresolved:
+            _m = _fb.get((_loc["frame_path"], _loc["line"]))
+            if _m and _m["exists"]:
+                _loc["resolved"] = _m["resolved"]
+                _loc["exists"] = True
     if locations:
         for loc in locations:
             target = loc["resolved"] or loc["frame_path"]
@@ -269,10 +281,18 @@ if st.session_state.triage_run:
 
     # -------------------------------------- Stage 6: verification -------
     stage_header(6, "Test verification")
-    st.write(
-        "Runs the victim-service pytest suite live. Before the fix, the "
-        "bug-covering tests fail; after applying Bob's fix, they go green."
-    )
+    if evidence_key == "004":
+        st.write(
+            "The pytest suite below covers the seeded victim-service (incidents "
+            "001\u2013003) \u2014 not this incident. Incident 004's fix was verified "
+            "with the reproducer in Bob IDE Task 15; the before/after is in "
+            "the Stage 7 report."
+        )
+    else:
+        st.write(
+            "Runs the victim-service pytest suite live. Before the fix, the "
+            "bug-covering tests fail; after applying Bob's fix, they go green."
+        )
     if st.button("Run test suite now", key="run_tests"):
         with st.spinner("Running pytest on victim-service..."):
             st.session_state["test_results"] = run_tests(VICTIM)
