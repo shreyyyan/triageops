@@ -71,11 +71,20 @@ def match_known_incident(alert):
 
 
 def stage_header(n, title):
-    st.markdown(f"## Stage {n}: {title}")
+    st.markdown(
+        f'<div class="stage-head"><span class="stage-num">{n}</span>'
+        f'<span class="stage-title">{title}</span></div>',
+        unsafe_allow_html=True,
+    )
 
 
-st.title("TriageOps — incident triage assistant")
-st.caption("Deterministic evidence pipeline + IBM Bob reasoning in the IDE.")
+st.markdown(
+    '<div class="hero"><div class="hero-kicker">IBM Bob 2.0 hackathon</div>'
+    '<div class="hero-title">TriageOps</div>'
+    '<div class="hero-sub">Incident triage assistant &mdash; deterministic evidence '
+    'pipeline + IBM Bob reasoning in the IDE.</div></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------- sidebar ---
 st.sidebar.header("Incident")

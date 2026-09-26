@@ -1,12 +1,78 @@
-/* GitHub dark style: dark canvas, bordered cards, green accent */
+/* TriageOps — GitHub-dark polish. Single dark theme, primary #2E7D4F. */
+
+/* ---------- hero ---------- */
+.hero {
+    border: 1px solid #30363d;
+    border-left: 4px solid #2E7D4F;
+    border-radius: 8px;
+    background: #161b22;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.6rem;
+}
+.hero-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7d8590;
+    margin-bottom: 0.35rem;
+}
+.hero-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #e6edf3;
+    line-height: 1.15;
+}
+.hero-sub {
+    color: #9aa4b2;
+    font-size: 0.95rem;
+    margin-top: 0.35rem;
+}
+
+/* ---------- stage headers ---------- */
+.stage-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 1.8rem 0 0.9rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid #21262d;
+}
+.stage-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    background: #2E7D4F;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.stage-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+/* ---------- metric cards ---------- */
+[data-testid="stMetric"] {
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    background: #161b22;
+    padding: 0.8rem 1rem;
+}
+
+/* ---------- code / expanders / alerts ---------- */
 [data-testid="stCode"] {
     border: 1px solid #30363d;
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: #161b22;
 }
 [data-testid="stCode"] pre {
     background-color: #161b22 !important;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 code {
     background-color: #343942;
@@ -15,13 +81,31 @@ code {
 }
 [data-testid="stExpander"] {
     border: 1px solid #30363d;
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: #161b22;
 }
 [data-testid="stAlert"] {
-    border-radius: 6px;
+    border-radius: 8px;
 }
+
+/* ---------- buttons ---------- */
 .stButton > button,
 [data-testid="stDownloadButton"] > button {
-    border-radius: 6px !important;
+    border-radius: 8px !important;
+    font-weight: 600;
+}
+.stButton > button:hover,
+[data-testid="stDownloadButton"] > button:hover {
+    filter: brightness(1.12);
+}
+
+/* ---------- sidebar ---------- */
+[data-testid="stSidebar"] {
+    background-color: #0d1117;
+    border-right: 1px solid #21262d;
+}
+
+/* ---------- misc ---------- */
+hr {
+    border-color: #21262d;
 }
