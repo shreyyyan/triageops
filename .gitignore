@@ -6,7 +6,6 @@ __pycache__/
 venv/
 
 # Generated triage reports (regenerate any time via the pipeline)
-triage/reports/*.md
 triage/reports/*.txt
 !triage/reports/.gitkeep
 triage/fixes/*.diff
