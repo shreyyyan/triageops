@@ -211,6 +211,10 @@ if st.session_state.triage_run:
             "Bob traces the faulty code path in the root-cause task instead."
         )
 
+    # Which Bob IDE task produced each stage's artifact (keeps captions honest per incident)
+    RC_TASKS = {"001": 2, "002": 6, "003": 9, "004": 13}
+    FIX_TASKS = {"001": 3, "002": 7, "003": 10, "004": 14}
+
     # --------------------------------------- Stage 4: root cause (Bob) ---
     stage_header(4, "Root-cause analysis")
     if evidence_key:
@@ -219,11 +223,11 @@ if st.session_state.triage_run:
             st.markdown(rc_path.read_text(encoding="utf-8"))
             if mode == "Custom alert":
                 st.caption(
-                    "Bob's Task 2 output for the matching known incident — "
+                    f"Bob's Task {RC_TASKS.get(evidence_key, 2)} output for the matching known incident — "
                     "generated in IBM Bob IDE, not invented for this alert."
                 )
             else:
-                st.caption("Generated in IBM Bob IDE — Task 2.")
+                st.caption(f"Generated in IBM Bob IDE — Task {RC_TASKS.get(evidence_key, 2)}.")
         else:
             st.warning(
                 "Not generated yet. In IBM Bob IDE, run **Task 2** from "
@@ -246,11 +250,11 @@ if st.session_state.triage_run:
             st.code(fix_path.read_text(encoding="utf-8"), language="diff")
             if mode == "Custom alert":
                 st.caption(
-                    "Bob's Task 3 proposal for the matching known incident — "
+                    f"Bob's Task {FIX_TASKS.get(evidence_key, 3)} proposal for the matching known incident — "
                     "generated in IBM Bob IDE."
                 )
             else:
-                st.caption("Proposed in IBM Bob IDE — Task 3.")
+                st.caption(f"Proposed in IBM Bob IDE — Task {FIX_TASKS.get(evidence_key, 3)}.")
         else:
             st.warning(
                 "Not generated yet. In IBM Bob IDE, run **Task 3** from "
