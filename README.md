@@ -1,5 +1,9 @@
 # TriageOps — incident triage assistant
 
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://triageops.streamlit.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![IBM Bob 2.0](https://img.shields.io/badge/IBM_Bob-2.0-blue)](https://lablab.ai/ai-hackathons/ibm-bob-2-hackathon)
+
 Built for the **IBM Bob 2.0 hackathon** (lablab.ai, 48-hour build, Sept 25–27 2026).
 Theme: *improve a developer workflow* — here, **debugging / incident response**.
 

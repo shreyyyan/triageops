@@ -7,8 +7,6 @@ venv/
 
 # Generated triage reports (regenerate any time via the pipeline)
 triage/reports/*.txt
-!triage/reports/.gitkeep
-!triage/fixes/.gitkeep
 
 # Streamlit
 .streamlit/
