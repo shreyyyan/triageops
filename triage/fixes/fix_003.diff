@@ -1,0 +1,64 @@
+--- a/victim-service/app.py
++++ b/victim-service/app.py
+@@ -77,7 +77,7 @@ def charge_payment(amount: float) -> str:
+     if mode == "sandbox":
+-        # BUG 3: sandbox mode should SIMULATE the charge (return a test txn id),
+-        # but instead it raises, failing every order with HTTP 502.
+-        raise PaymentError("sandbox gateway declined the charge")
++        return "test_sandbox_txn"
+     return "txn_%d" % int(round(amount * 100))
+
+---
+
+## Safety Rationale
+
+### What the fix does
+
+Replace three lines inside the `if mode == "sandbox":` branch of `charge_payment()`
+in `victim-service/app.py` with a single return statement:
+
+| Line(s) | Before | After |
+|---------|--------|-------|
+| 78–79 | Two comment lines describing the bug | removed (bug no longer exists) |
+| 80 | `raise PaymentError("sandbox gateway declined the charge")` | `return "test_sandbox_txn"` |
+
+The sole executable change is on line 80: `raise` → `return "test_sandbox_txn"`.
+The two comment lines are removed only because they exist solely to describe the
+bug that is being fixed; retaining them would leave misleading comments in
+production code.
+
+### Why this is the minimal change
+
+The defect is a single wrong statement: `raise` where `return` was intended.
+The fix replaces exactly that one statement with the correct behaviour the
+in-code comment (line 78–79) already documents — returning a simulated
+transaction ID. No other function, endpoint, or data path is touched.
+
+The returned string `"test_sandbox_txn"` satisfies the only caller-side
+assertion about sandbox transaction IDs: `body["txn_id"].startswith("test_")`
+(test line 112). A fixed, recognisable prefix keeps the sandbox response
+distinguishable from live transaction IDs (`"txn_<cents>"`), which is the
+correct design intent.
+
+### Why the fix is safe
+
+| Concern | Assessment |
+|---------|-----------|
+| **Live mode unaffected** | The `if mode == "sandbox":` guard is unchanged. When `PAYMENTS_MODE` is `"live"` (or unset), execution falls straight through to the existing `return "txn_%d" …` line — no change in behaviour. |
+| **No new imports or dependencies** | The fix adds no imports, no helper functions, and no external calls. |
+| **No data corruption risk** | In sandbox mode, orders already reached `ORDERS[order_id] = record` only after a successful `charge_payment()`. The fix restores that path; the order is now persisted correctly with a `test_sandbox_txn` transaction ID, exactly as designed. |
+| **Exception class untouched** | `PaymentError` is not removed; real gateway failures (future live-mode integration) can still raise it as intended. |
+| **Blast radius** | `charge_payment()` has exactly one call site: line 101 of `create_order()`. No other function or endpoint is affected. |
+
+### Tests that should pass after applying the fix
+
+| Test | File | Line | Status before fix | Expected after fix |
+|------|------|------|-------------------|--------------------|
+| `test_sandbox_mode_simulates_payment` | `victim-service/tests/test_orders.py` | 107 | **FAILING** — `POST /orders` returns 502; `txn_id` absent | **PASS** — returns 200, `txn_id == "test_sandbox_txn"` starts with `"test_"` |
+| `test_create_order_happy_path` | `victim-service/tests/test_orders.py` | 42 | PASSING — live mode, no sandbox branch taken | **remains PASS** |
+| `test_get_order_roundtrip` | `victim-service/tests/test_orders.py` | 53 | PASSING — reads a live-mode order | **remains PASS** |
+| `test_bulk_discount_applied_exactly_once` | `victim-service/tests/test_orders.py` | 91 | FAILING (BUG 2, unrelated) | **unchanged** — this fix does not touch discount logic |
+| `test_bulk_threshold_boundary_no_discount` | `victim-service/tests/test_orders.py` | 115 | PASSING | **remains PASS** |
+
+`test_sandbox_mode_simulates_payment` is currently **failing** and will turn
+green after this patch. All other tests are unaffected.
