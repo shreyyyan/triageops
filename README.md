@@ -3,6 +3,8 @@
 Built for the **IBM Bob 2.0 hackathon** (lablab.ai, 48-hour build, Sept 25–27 2026).
 Theme: *improve a developer workflow* — here, **debugging / incident response**.
 
+**Live demo:** https://triageops.streamlit.app/
+
 ## The problem
 
 When an alert fires, an on-call engineer burns tens of minutes on mechanical
@@ -29,6 +31,15 @@ Feed it an incident alert + service logs. It:
 The pipeline is deterministic and never invents analysis; the reasoning is
 Bob's, with session screenshots committed under `bob_sessions/`.
 
+## Custom alert mode
+
+Beyond the three bundled incidents, the dashboard accepts any alert JSON
+plus optional log lines and runs the deterministic pipeline live on them.
+If the alert matches a known incident signature, Bob's previously generated
+diagnosis and fix proposal for it are shown (clearly labelled as prior Bob
+output); otherwise the dashboard reports the deterministic evidence only and
+produces an honestly-labelled draft report — it never invents a diagnosis.
+
 ## Architecture
 
 ```
@@ -50,14 +61,18 @@ Bob's, with session screenshots committed under `bob_sessions/`.
               |                                 |
    +----------v-----------+          +----------v-----------+
    | triage/app.py         |          | IBM Bob IDE          |
-   | (Streamlit dashboard)|          |  Task 1: intake      |
-   | 7-stage demo UI      |<-------->|  Task 2: root cause  |
-   +----------------------+  files   |  Task 3: fix diff    |
-                                     |  Task 4: verify      |
-   +--------------------------------+  Task 5: report      |
+   | (Streamlit dashboard)|          |  11 tasks, see below |
+   | 7-stage demo UI      |<-------->|                        |
+   +----------------------+  files   |                        |
+                                     |                        |
+   +--------------------------------+                        |
    | victim-service/  (FastAPI app with 3 seeded bugs)      |
    +--------------------------------------------------------+
 ```
+
+Bob IDE tasks: 1-5 cover incident 001 (intake, root-cause trace, fix proposal,
+verify, incident report); 6-8 and 9-11 repeat the trace-propose-report loop
+for incidents 002 and 003, with fixes proposed only, never applied.
 
 ## Quickstart
 
@@ -87,16 +102,22 @@ print('report:', r['report_path'])
 streamlit run triage/app.py
 ```
 
-## The 5-step Bob workflow
+## The Bob workflow (11 tasks)
 
 In Bob IDE, on the **hackathon-provisioned account**, run the prompts in
-`prompts/bob_tasks.md` in order:
+`prompts/bob_tasks.md` in order.
+
+**Incident 001** (tasks 1-5) — the full trace-fix-verify loop:
 
 1. **Incident intake** (Ask mode) — timeline + ranked hypotheses from the alert and logs.
 2. **Root-cause trace** (Agent mode) — exact faulty code path, saved to `triage/reports/root_cause_001.md`.
 3. **Fix proposal** (Agent mode) — minimal diff + safety rationale, saved to `triage/fixes/fix_001.diff`.
 4. **Verify** (Agent mode) — apply the fix, run pytest, iterate until the incident's tests pass.
 5. **Incident report** (Agent mode) — final one-page markdown report.
+
+**Incidents 002/003** (tasks 6-11) — root-cause trace, fix proposal, and
+incident report for each. Fixes are proposed only, never applied, so the
+live suite honestly stays at 7 passed / 2 failed.
 
 Screenshot each task's session consumption summary into `bob_sessions/`
 (see `bob_sessions/README.md`).
@@ -127,7 +148,7 @@ this repo, not on production outages.
 - `victim-service/` — the sample FastAPI app with 3 seeded bugs + pytest suite
 - `triage/` — `triage_core.py` (deterministic pipeline), `app.py` (Streamlit demo UI)
 - `incidents/` — 3 synthetic incident payloads (alert JSON + logs each)
-- `prompts/bob_tasks.md` — the 5 Bob IDE task prompts
+- `prompts/bob_tasks.md` — the 11 Bob IDE task prompts
 - `bob_sessions/` — Bob task session screenshots (required deliverable)
 - `DEMO_SCRIPT.md` — 3-minute video plan
 - `STATEMENTS.md` — submission statements: problem/solution and IBM Bob usage

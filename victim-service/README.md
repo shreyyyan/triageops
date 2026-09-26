@@ -37,5 +37,8 @@ python -m pytest tests/ -v
    transaction id without declining.
 
 On the seeded code, the four bug-covering tests fail; everything else passes.
-The Bob IDE workflow (see `../prompts/bob_tasks.md`) fixes the bugs, and the
-suite goes green — that red-to-green transition is the demo's verification step.
+The Bob IDE workflow (see `../prompts/bob_tasks.md`) fixes incident 001's
+bug: 5 passed / 4 failed → 7 passed / 2 failed. Incidents 002/003 have
+proposed-only fixes in `triage/fixes/`; their tests remain failing by design,
+which the dashboard shows honestly. That scoped red-to-green transition is
+the demo's verification step.

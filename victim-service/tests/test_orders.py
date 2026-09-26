@@ -1,8 +1,11 @@
 """Pytest suite for the victim service.
 
 On the SEEDED (buggy) code, the four tests marked BUG 1 / BUG 2 / BUG 3 FAIL.
-After the correct fixes are applied (via the Bob IDE workflow), the whole
-suite goes green. Nothing here is faked: run `pytest -v` to see it.
+After incident 001's fix is applied (via the Bob IDE workflow), the suite
+goes from 5 passed / 4 failed to 7 passed / 2 failed. The 2 remaining
+failures are the deliberately-unfixed seeded incidents 002/003 (fixes
+proposed only, in triage/fixes/). Nothing here is faked: run `pytest -v`
+to see it.
 """
 
 import os

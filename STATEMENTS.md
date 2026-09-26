@@ -22,4 +22,16 @@ Task 4 (Agent mode) — apply and verify. Bob applied the diff, ran python -m py
 
 Task 5 (Agent mode) — incident report. Bob synthesized the alert, logs, root-cause report, diff, and test results into a one-page factual report at triage/reports/incident_INC-2026-1042_report.md, marking uncertain items as uncertain rather than inventing data.
 
+Tasks 6-11 (Agent mode) repeated the loop for the two remaining seeded
+incidents, proposed-only. For INC-2026-1043 (tasks 6-8), Bob traced the bulk
+discount applied twice — item level and subtotal level — wrote
+triage/reports/root_cause_002.md, proposed the minimal diff in
+triage/fixes/fix_002.diff removing the second application, and wrote the
+incident report. For INC-2026-1044 (tasks 9-11), Bob traced
+PAYMENTS_MODE=sandbox raising PaymentError instead of simulating, wrote
+triage/reports/root_cause_003.md, proposed triage/fixes/fix_003.diff
+returning "test_sandbox_txn" from the sandbox branch, and wrote the incident
+report. Both fixes were deliberately left unapplied, so the dashboard keeps
+showing the honest live result: 7 passed / 2 failed.
+
 Total Bobcoin spend stayed well under the 40-coin allocation. The division of labor is deliberate: the deterministic pipeline gathers evidence it cannot hallucinate; Bob does the reasoning, and every claim it makes is anchored to a file, a line, or a test result.

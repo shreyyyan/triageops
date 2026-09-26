@@ -338,13 +338,17 @@ with st.expander("Bob evidence — how IBM Bob was used"):
     st.markdown(
         """
 IBM Bob (IDE, hackathon-provisioned account) is the reasoning engine of this
-workflow. The five Bob tasks in `prompts/bob_tasks.md`:
+workflow. The eleven Bob tasks in `prompts/bob_tasks.md`:
 
 1. **Incident intake** (Ask mode) — structured timeline + ranked hypotheses.
 2. **Root-cause trace** (Agent mode) — exact faulty code path, saved to `triage/reports/`.
 3. **Fix proposal** (Agent mode) — minimal diff + safety rationale, saved to `triage/fixes/`.
-4. **Verify** (Agent mode) — apply fix, run pytest, iterate to green.
+4. **Verify** (Agent mode) — apply fix, run pytest, iterate until the incident's tests pass.
 5. **Incident report** (Agent mode) — final markdown report.
+
+Tasks 1-5 cover incident 001 end to end; tasks 6-11 repeat the
+trace-propose-report loop for incidents 002 and 003, with fixes proposed
+only (never applied).
 
 Per-task session summary screenshots are stored in `bob_sessions/` and are a
 required submission deliverable.

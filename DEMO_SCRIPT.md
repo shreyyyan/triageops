@@ -14,7 +14,7 @@ On screen: `streamlit run triage/app.py`.
 
 - Sidebar: select incident 001, click **Run triage**.
 - Stage 1 — Alert parsed: the alert payload, structured.
-- Stage 2 — Log evidence: 37 matching log lines around the incident window.
+- Stage 2 — Log evidence: 48 matching log lines around the incident window.
 - Stage 3 — Code locations: traceback frames resolved to `victim-service/app.py:60`.
 - Stage 6 — Test verification: click **Run test suite now** — 7 passed, 2 failed (the 2 failures are separate seeded incidents, intentionally untouched).
 - Stage 7 — Incident report: download the rendered report.
@@ -23,7 +23,7 @@ On screen: `streamlit run triage/app.py`.
 
 On screen: Bob IDE. This section is the heart of the video — do not shorten it.
 
-- Tasks panel: all 5 tasks.
+- Tasks panel: all 11 tasks.
 - Task 1: timeline + 3 ranked hypotheses from the alert and logs.
 - `triage/reports/root_cause_001.md`: the traced call chain and blast radius.
 - `triage/fixes/fix_001.diff`: the one-line fix — `TAX_RATES[region]` → `TAX_RATES.get(region, 0.0)`.
@@ -35,7 +35,7 @@ On screen: Bob IDE. This section is the heart of the video — do not shorten it
 
 On screen: `github.com/shreyyyan/triageops`, then the `bob_sessions/` folder.
 
-"TriageOps turns a 30-minute panic into a guided workflow. The pipeline gathers the evidence, Bob does the reasoning, the fix is proven by tests. All five Bob sessions are saved in the repo."
+"TriageOps turns a 30-minute panic into a guided workflow. The pipeline gathers the evidence, Bob does the reasoning, the fix is proven by tests. All eleven Bob sessions are saved in the repo."
 
 ## Recording notes
 

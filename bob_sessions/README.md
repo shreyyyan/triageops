@@ -24,9 +24,15 @@ Use these exact names so they line up with `prompts/bob_tasks.md`:
 - `triageops_task03_fix_proposal_summary.png`
 - `triageops_task04_verify_tests_summary.png`
 - `triageops_task05_incident_report_summary.png`
+- `triageops_task06_002_root_cause_summary.png`
+- `triageops_task07_002_fix_summary.png`
+- `triageops_task08_002_report_summary.png`
+- `triageops_task09_003_root_cause_summary.png`
+- `triageops_task10_003_fix_summary.png`
+- `triageops_task11_003_report_summary.png`
 
-If you run extra tasks (e.g. triaging incident_002 or incident_003), keep the
-same pattern: `triageops_task06_<short>_summary.png`, and so on.
+If you run extra tasks, keep the same pattern:
+`triageops_task12_<short>_summary.png`, and so on.
 
 ## Before submitting
 

@@ -1,6 +1,6 @@
 # IBM Bob Task Prompts
 
-The five Bob IDE tasks behind TriageOps' incident-triage loop, in order. Run each
+The eleven Bob IDE tasks behind TriageOps' incident-triage loop, in order. Run each
 as a new Bob task with the repo open in Bob IDE. Session screenshots for every
 task are committed under `bob_sessions/`.
 
@@ -112,6 +112,142 @@ Sections: Summary, Timeline, Evidence, Root cause, Fix applied,
 Verification (with exact test counts), Prevention suggestions.
 Keep it factual and under one page. Do not invent data that is not in the
 sources above; mark anything uncertain as uncertain.
+```
+
+## Task 6 — Incident 002 root-cause trace (Agent mode)
+
+Trace the exact faulty code path for the silent discount bug. Output:
+`triage/reports/root_cause_002.md`.
+
+```
+In Agent mode, working in the victim-service/ directory:
+
+Trace the exact code path that applies the bulk discount twice for incident_002
+(error signature "BULK_DISCOUNT_ANOMALY", alert INC-2026-1043). This is a
+silent logic bug: no exception, no traceback — find where the discount is
+applied at both the item level and again at the subtotal level.
+
+Write your findings to triage/reports/root_cause_002.md with these sections:
+- Faulty code path (function call chain with file:line for each step)
+- Why the discount is applied twice (which two code locations, and why the
+  second application is wrong)
+- Blast radius (which orders are affected)
+- The minimal correct behaviour
+
+Do not change any code in this task. Analysis only. Do NOT apply any fix:
+the fix for this incident is proposed only, so the live test suite keeps
+failing on it by design.
+```
+
+## Task 7 — Incident 002 fix proposal (Agent mode)
+
+Propose a minimal, safe diff for the double-discount bug. Output:
+`triage/fixes/fix_002.diff`. Do NOT apply it.
+
+```
+In Agent mode, using your root-cause analysis in
+triage/reports/root_cause_002.md:
+
+Propose the MINIMAL code change in victim-service/app.py that stops the bulk
+discount being applied twice (remove the second, subtotal-level application),
+without changing behaviour for orders that legitimately qualify once.
+Requirements:
+- The diff must be minimal: touch as few lines as possible.
+- Write the unified diff to triage/fixes/fix_002.diff (do NOT apply it —
+  this fix stays proposed-only so the dashboard keeps showing the honest
+  7 passed / 2 failed suite).
+- Below the diff, add a short safety rationale: what could regress, and which
+  existing tests cover the changed lines.
+
+Do not run the test suite in this task.
+```
+
+## Task 8 — Incident 002 incident report (Agent mode)
+
+Write the final incident report. Output:
+`triage/reports/incident_INC-2026-1043_report.md`.
+
+```
+In Agent mode:
+
+Write the incident report for INC-2026-1043 to
+triage/reports/incident_INC-2026-1043_report.md. Base it strictly on:
+- incidents/incident_002.json (evidence; no traceback — silent bug)
+- triage/reports/root_cause_002.md (root cause)
+- triage/fixes/fix_002.diff (fix PROPOSED, not applied)
+
+Sections: Summary, Timeline, Evidence, Root cause, Proposed fix (mark clearly
+as NOT applied), Prevention suggestions. Keep it factual and under one page.
+Do not invent data that is not in the sources above; mark anything uncertain
+as uncertain.
+```
+
+## Task 9 — Incident 003 root-cause trace (Agent mode)
+
+Trace the exact faulty code path for the sandbox payments bug. Output:
+`triage/reports/root_cause_003.md`.
+
+```
+In Agent mode, working in the victim-service/ directory:
+
+Trace the exact code path that makes PAYMENTS_MODE=sandbox decline every
+order for incident_003 (error signature "PaymentError", alert INC-2026-1044).
+The sandbox branch raises PaymentError instead of simulating the charge;
+the correct behaviour is to return a test_-prefixed transaction id without
+declining.
+
+Write your findings to triage/reports/root_cause_003.md with these sections:
+- Faulty code path (function call chain with file:line for each step)
+- Why the sandbox branch raises instead of simulating
+- Blast radius (which orders fail)
+- The minimal correct behaviour
+
+Do not change any code in this task. Analysis only. Do NOT apply any fix:
+the fix for this incident is proposed only, so the live test suite keeps
+failing on it by design.
+```
+
+## Task 10 — Incident 003 fix proposal (Agent mode)
+
+Propose a minimal, safe diff for the sandbox payments bug. Output:
+`triage/fixes/fix_003.diff`. Do NOT apply it.
+
+```
+In Agent mode, using your root-cause analysis in
+triage/reports/root_cause_003.md:
+
+Propose the MINIMAL code change in victim-service/app.py that makes the
+sandbox branch return "test_sandbox_txn" instead of raising PaymentError,
+without changing behaviour for other payment modes.
+Requirements:
+- The diff must be minimal: touch as few lines as possible.
+- Write the unified diff to triage/fixes/fix_003.diff (do NOT apply it —
+  this fix stays proposed-only so the dashboard keeps showing the honest
+  7 passed / 2 failed suite).
+- Below the diff, add a short safety rationale: what could regress, and which
+  existing tests cover the changed lines.
+
+Do not run the test suite in this task.
+```
+
+## Task 11 — Incident 003 incident report (Agent mode)
+
+Write the final incident report. Output:
+`triage/reports/incident_INC-2026-1044_report.md`.
+
+```
+In Agent mode:
+
+Write the incident report for INC-2026-1044 to
+triage/reports/incident_INC-2026-1044_report.md. Base it strictly on:
+- incidents/incident_003.json (evidence)
+- triage/reports/root_cause_003.md (root cause)
+- triage/fixes/fix_003.diff (fix PROPOSED, not applied)
+
+Sections: Summary, Timeline, Evidence, Root cause, Proposed fix (mark clearly
+as NOT applied), Prevention suggestions. Keep it factual and under one page.
+Do not invent data that is not in the sources above; mark anything uncertain
+as uncertain.
 ```
 
 ## Notes
