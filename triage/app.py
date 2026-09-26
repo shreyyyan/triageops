@@ -204,8 +204,8 @@ if st.session_state.triage_run:
             st.write(f"`{target}:{loc['line']}` in `{loc['function']}()` — **{icon}**")
     else:
         st.info(
-            "No traceback frames in this alert (silent logic bug). "
-            "Bob traces the faulty code path in Task 2 instead."
+            "No traceback frames in this alert. "
+            "Bob traces the faulty code path in the root-cause task instead."
         )
 
     # --------------------------------------- Stage 4: root cause (Bob) ---
