@@ -38,11 +38,9 @@ Bob's, with session screenshots committed under `bob_sessions/`.
 ## Screenshots
 
 ![TriageOps dashboard — root-cause analysis for the real-world humanize incident](docs/img/dashboard-004.png)
-*Stage 4 of the dashboard on incident 004: Bob's root-cause analysis of the genuine `humanize.metric(0)` crash, traceback resolving to `number.py:511`.*
+*Stage 4 of the dashboard on incident 004: Bob's root-cause analysis of the genuine `humanize.metric(0)` crash, tracing the faulty code path step by step to the unguarded line 511.*
 
-![Bob IDE tasks 1–8](docs/img/bob-tasks-1-8.png)
-![Bob IDE tasks 9–16](docs/img/bob-tasks-9-16.png)
-
+![All 16 Bob IDE tasks, side by side](docs/img/bob-tasks-all.png)
 *All 16 Bob IDE tasks — the reasoning engine behind every dashboard stage. Prompts live in `prompts/bob_tasks.md`, session screenshots in `bob_sessions/`.*
 
 ![Bob vs upstream — Task 16's honest comparison](docs/img/bob-vs-upstream.png)
