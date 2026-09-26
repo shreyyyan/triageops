@@ -42,6 +42,7 @@ Bob's, with session screenshots committed under `bob_sessions/`.
 
 ![Bob IDE tasks 1–8](docs/img/bob-tasks-1-8.png)
 ![Bob IDE tasks 9–16](docs/img/bob-tasks-9-16.png)
+
 *All 16 Bob IDE tasks — the reasoning engine behind every dashboard stage. Prompts live in `prompts/bob_tasks.md`, session screenshots in `bob_sessions/`.*
 
 ![Bob vs upstream — Task 16's honest comparison](docs/img/bob-vs-upstream.png)
