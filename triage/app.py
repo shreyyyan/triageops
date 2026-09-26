@@ -6,9 +6,18 @@ The dashboard walks through the incident-triage pipeline stage by stage.
 Deterministic evidence gathering runs here; root-cause reasoning and the fix
 are produced in IBM Bob IDE (see prompts/bob_tasks.md) and are picked up
 from triage/reports/ and triage/fixes/ when present.
+
+Two modes:
+  * Bundled incident — one of the three synthetic incidents shipped with the repo.
+  * Custom alert — paste any alert JSON (plus optional log lines) and the
+    pipeline runs live on your input. If the alert matches a known incident
+    signature, Bob's IDE-generated diagnosis for it is shown; otherwise the
+    dashboard honestly reports the deterministic evidence only.
 """
 
+import json
 import sys
+import tempfile
 from pathlib import Path
 
 import streamlit as st
@@ -30,12 +39,35 @@ if _css.exists():
     st.markdown(f"<style>{_css.read_text()}</style>", unsafe_allow_html=True)
 
 
-
 INCIDENT_META = {
     "001": ("INC-2026-1042", "Crash: KeyError in apply_tax on POST /orders"),
     "002": ("INC-2026-1043", "Silent revenue leak: bulk discount applied twice"),
     "003": ("INC-2026-1044", "Config: PAYMENTS_MODE=sandbox declines all orders"),
 }
+
+# Prefill for the custom-alert box: guaranteed-valid example JSON.
+CUSTOM_TEMPLATE = json.dumps(
+    json.loads((INCIDENTS / "incident_001.json").read_text(encoding="utf-8")),
+    indent=2,
+)
+
+
+def match_known_incident(alert):
+    """Match a custom alert to a bundled incident by error signature.
+
+    Returns "001"/"002"/"003" or None. Only used to surface Bob's
+    IDE-generated artifacts for a matching known incident — never to
+    invent a diagnosis.
+    """
+    sig = (alert.get("error_signature") or "").lower()
+    tb = (alert.get("traceback") or "").lower()
+    if "keyerror" in sig or "apply_tax" in tb:
+        return "001"
+    if "discount" in sig:
+        return "002"
+    if "payment" in sig:
+        return "003"
+    return None
 
 
 def stage_header(n, title):
@@ -47,14 +79,37 @@ st.caption("Deterministic evidence pipeline + IBM Bob reasoning in the IDE.")
 
 # ---------------------------------------------------------------- sidebar ---
 st.sidebar.header("Incident")
-choice = st.sidebar.selectbox(
-    "Select a bundled incident",
-    options=["001", "002", "003"],
-    format_func=lambda k: f"{k} — {INCIDENT_META[k][1]}",
+mode = st.sidebar.radio(
+    "Mode",
+    ["Bundled incident", "Custom alert"],
+    index=0,
+    help="Bundled: one of the three synthetic incidents. Custom: paste your "
+    "own alert JSON and the pipeline runs live on it.",
 )
-alert_id, short_title = INCIDENT_META[choice]
-incident_json = INCIDENTS / f"incident_{choice}.json"
-incident_logs = INCIDENTS / f"incident_{choice}_logs.txt"
+
+custom_alert_text = ""
+custom_logs_text = ""
+if mode == "Bundled incident":
+    choice = st.sidebar.selectbox(
+        "Select a bundled incident",
+        options=["001", "002", "003"],
+        format_func=lambda k: f"{k} — {INCIDENT_META[k][1]}",
+    )
+    alert_id, short_title = INCIDENT_META[choice]
+    incident_json = INCIDENTS / f"incident_{choice}.json"
+    incident_logs = INCIDENTS / f"incident_{choice}_logs.txt"
+else:
+    choice = None
+    st.sidebar.markdown("Paste an alert JSON with the same fields as the bundled incidents.")
+    custom_alert_text = st.sidebar.text_area(
+        "Alert JSON", value=CUSTOM_TEMPLATE, height=220
+    )
+    custom_logs_text = st.sidebar.text_area(
+        "Log lines (optional)",
+        value="",
+        height=120,
+        help="Paste raw log lines; they get correlated against the alert's error signature.",
+    )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
@@ -71,7 +126,35 @@ if run:
     st.session_state.triage_run = True
 
 if st.session_state.triage_run:
-    alert = parse_alert(incident_json)
+    # ------------------------------------------------- resolve inputs ----
+    matched = None
+    logs_path = None
+    if mode == "Bundled incident":
+        evidence_key = choice
+        try:
+            alert = parse_alert(incident_json)
+        except (ValueError, OSError) as exc:
+            st.error(f"Could not parse the bundled incident: {exc}")
+            st.stop()
+        logs_path = incident_logs
+    else:
+        evidence_key = None
+        try:
+            payload = json.loads(custom_alert_text)
+        except json.JSONDecodeError as exc:
+            st.error(f"That JSON doesn't parse ({exc}). Fix it and press Run triage again.")
+            st.stop()
+        try:
+            alert = parse_alert(payload)
+        except ValueError as exc:
+            st.error(f"Alert problem: {exc}")
+            st.stop()
+        alert_id = alert["alert_id"]
+        if custom_logs_text.strip():
+            logs_path = Path(tempfile.gettempdir()) / "triageops_custom_logs.txt"
+            logs_path.write_text(custom_logs_text, encoding="utf-8")
+        matched = match_known_incident(alert)
+        evidence_key = matched
 
     # ------------------------------------------------- Stage 1: alert ----
     stage_header(1, "Alert parsed")
@@ -89,11 +172,18 @@ if st.session_state.triage_run:
 
     # ------------------------------------------------- Stage 2: logs -----
     stage_header(2, "Log evidence")
-    matches = correlate_logs(incident_logs, alert["error_signature"])
-    st.write(f"**{len(matches)} matching log line(s)** around the incident window.")
-    with st.expander("Show correlated log lines", expanded=True):
-        for m in matches[:10]:
-            st.code(f"L{m['line_no']:>4}  {m['line'][:200]}", language="text")
+    if logs_path is None:
+        st.info(
+            "No log lines supplied. Paste some into the sidebar's **Log lines** "
+            "box and re-run to correlate them against the error signature."
+        )
+        matches = []
+    else:
+        matches = correlate_logs(logs_path, alert["error_signature"])
+        st.write(f"**{len(matches)} matching log line(s)** around the incident window.")
+        with st.expander("Show correlated log lines", expanded=True):
+            for m in matches[:10]:
+                st.code(f"L{m['line_no']:>4}  {m['line'][:200]}", language="text")
 
     # ------------------------------------------------- Stage 3: code ----
     stage_header(3, "Code locations (from traceback)")
@@ -111,28 +201,54 @@ if st.session_state.triage_run:
 
     # --------------------------------------- Stage 4: root cause (Bob) ---
     stage_header(4, "Root-cause analysis")
-    rc_path = REPORTS / f"root_cause_{choice}.md"
-    if rc_path.exists():
-        st.markdown(rc_path.read_text(encoding="utf-8"))
-        st.caption("Generated in IBM Bob IDE — Task 2.")
+    if evidence_key:
+        rc_path = REPORTS / f"root_cause_{evidence_key}.md"
+        if rc_path.exists():
+            st.markdown(rc_path.read_text(encoding="utf-8"))
+            if mode == "Custom alert":
+                st.caption(
+                    "Bob's Task 2 output for the matching known incident — "
+                    "generated in IBM Bob IDE, not invented for this alert."
+                )
+            else:
+                st.caption("Generated in IBM Bob IDE — Task 2.")
+        else:
+            st.warning(
+                "Not generated yet. In IBM Bob IDE, run **Task 2** from "
+                "`prompts/bob_tasks.md` and save Bob's output to "
+                f"`triage/reports/root_cause_{evidence_key}.md`, then re-run this dashboard."
+            )
     else:
-        st.warning(
-            "Not generated yet. In IBM Bob IDE, run **Task 2** from "
-            "`prompts/bob_tasks.md` and save Bob's output to "
-            f"`triage/reports/root_cause_{choice}.md`, then re-run this dashboard."
+        st.info(
+            "No Bob investigation matches this alert's signature yet. In the real "
+            "workflow this is where you'd run Bob IDE Tasks 1–5 "
+            "(`prompts/bob_tasks.md`) on the evidence above — the deterministic "
+            "pipeline output is exactly what Bob would start from."
         )
 
     # ------------------------------------------ Stage 5: fix (Bob) ------
     stage_header(5, "Proposed fix")
-    fix_path = FIXES / f"fix_{choice}.diff"
-    if fix_path.exists():
-        st.code(fix_path.read_text(encoding="utf-8"), language="diff")
-        st.caption("Proposed in IBM Bob IDE — Task 3.")
+    if evidence_key:
+        fix_path = FIXES / f"fix_{evidence_key}.diff"
+        if fix_path.exists():
+            st.code(fix_path.read_text(encoding="utf-8"), language="diff")
+            if mode == "Custom alert":
+                st.caption(
+                    "Bob's Task 3 proposal for the matching known incident — "
+                    "generated in IBM Bob IDE."
+                )
+            else:
+                st.caption("Proposed in IBM Bob IDE — Task 3.")
+        else:
+            st.warning(
+                "Not generated yet. In IBM Bob IDE, run **Task 3** from "
+                "`prompts/bob_tasks.md` and save the diff to "
+                f"`triage/fixes/fix_{evidence_key}.diff`, then re-run this dashboard."
+            )
     else:
-        st.warning(
-            "Not generated yet. In IBM Bob IDE, run **Task 3** from "
-            "`prompts/bob_tasks.md` and save the diff to "
-            f"`triage/fixes/fix_{choice}.diff`, then re-run this dashboard."
+        st.info(
+            "No fix proposal exists for an unmatched alert. Run Bob IDE Task 3 "
+            "on this evidence to produce one."
         )
 
     # -------------------------------------- Stage 6: verification -------
@@ -143,7 +259,9 @@ if st.session_state.triage_run:
     )
     if st.button("Run test suite now", key="run_tests"):
         with st.spinner("Running pytest on victim-service..."):
-            results = run_tests(VICTIM)
+            st.session_state["test_results"] = run_tests(VICTIM)
+    results = st.session_state.get("test_results")
+    if results:
         a, b, c = st.columns(3)
         a.metric("Passed", results["passed"])
         b.metric("Failed", results["failed"])
@@ -154,24 +272,55 @@ if st.session_state.triage_run:
 
     # -------------------------------------- Stage 7: incident report ----
     stage_header(7, "Incident report")
-    report_path = REPORTS / f"incident_{alert_id}_report.md"
-    if report_path.exists():
-        md = report_path.read_text(encoding="utf-8")
+    if mode == "Bundled incident":
+        report_path = REPORTS / f"incident_{alert_id}_report.md"
+        if report_path.exists():
+            md = report_path.read_text(encoding="utf-8")
+        else:
+            md = (
+                "## Incident report\n\n"
+                "Run the headless pipeline once to generate it:\n\n"
+                "```bash\n"
+                "cd triage && python -c \"from triage_core import run_pipeline; "
+                f"run_pipeline('../incidents/incident_{choice}.json', "
+                f"'../incidents/incident_{choice}_logs.txt', '../victim-service')\"\n"
+                "```\n"
+            )
+        report_name = f"incident_{alert_id}_report.md"
     else:
-        md = (
-            "## Incident report\n\n"
-            "Run the headless pipeline once to generate it:\n\n"
-            "```bash\n"
-            "cd triage && python -c \"from triage_core import run_pipeline; "
-            f"run_pipeline('../incidents/incident_{choice}.json', "
-            f"'../incidents/incident_{choice}_logs.txt', '../victim-service')\"\n"
-            "```\n"
+        tr = st.session_state.get("test_results")
+        verif = (
+            f"- pytest: **{tr['passed']} passed, {tr['failed']} failed** "
+            f"(`{tr['summary_line']}`)"
+            if tr
+            else "- pytest: not run yet (see Stage 6)"
         )
+        evidence_lines = "".join(
+            f"- `{loc['resolved'] or loc['frame_path']}:{loc['line']}` "
+            f"in `{loc['function']}()`\n"
+            for loc in locations
+        ) or "- none (no traceback frames)\n"
+        md = (
+            "## Incident report (draft)\n\n"
+            f"**Alert:** {alert['alert_id']} — {alert['service']} {alert['endpoint']}\n\n"
+            f"**Severity:** {alert['severity']} | **Detected:** {alert['timestamp']}\n\n"
+            f"**Signature:** `{alert['error_signature']}`\n\n"
+            f"**Impact:** {alert['customer_impact']}\n\n"
+            "### Evidence (deterministic pipeline)\n\n"
+            f"- Log lines matched: **{len(matches)}**\n"
+            f"{evidence_lines}\n"
+            "### Verification\n\n"
+            f"{verif}\n\n"
+            "> Draft generated by the deterministic pipeline, not by Bob. "
+            "Root-cause reasoning and the fix proposal for this alert have not "
+            "been produced in Bob IDE yet.\n"
+        )
+        report_name = f"incident_{alert['alert_id']}_report_draft.md"
     st.markdown(md)
     st.download_button(
         "Download incident report",
         data=md,
-        file_name=f"incident_{alert_id}_report.md",
+        file_name=report_name,
         mime="text/markdown",
     )
 
