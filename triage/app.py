@@ -123,7 +123,7 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     "**Bob evidence:** every reasoning step for this demo is produced in "
-    "IBM Bob IDE. Session screenshots live in `bob_sessions/`; the five task "
+    "IBM Bob IDE. Session screenshots live in `bob_sessions/`; the eleven task "
     "prompts are in `prompts/bob_tasks.md`."
 )
 
