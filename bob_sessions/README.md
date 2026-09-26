@@ -30,9 +30,14 @@ Use these exact names so they line up with `prompts/bob_tasks.md`:
 - `triageops_task09_003_root_cause_summary.png`
 - `triageops_task10_003_fix_summary.png`
 - `triageops_task11_003_report_summary.png`
+- `triageops_task12_004_intake_summary.png`
+- `triageops_task13_004_root_cause_summary.png`
+- `triageops_task14_004_fix_summary.png`
+- `triageops_task15_004_verify_summary.png`
+- `triageops_task16_004_report_summary.png`
 
 If you run extra tasks, keep the same pattern:
-`triageops_task12_<short>_summary.png`, and so on.
+`triageops_task17_<short>_summary.png`, and so on.
 
 ## Before submitting
 

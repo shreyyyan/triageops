@@ -61,18 +61,22 @@ produces an honestly-labelled draft report — it never invents a diagnosis.
               |                                 |
    +----------v-----------+          +----------v-----------+
    | triage/app.py         |          | IBM Bob IDE          |
-   | (Streamlit dashboard)|          |  11 tasks, see below |
+   | (Streamlit dashboard)|          |  16 tasks, see below |
    | 7-stage demo UI      |<-------->|                        |
    +----------------------+  files   |                        |
                                      |                        |
    +--------------------------------+                        |
    | victim-service/  (FastAPI app with 3 seeded bugs)      |
+| triage/realworld/ (vendored humanize 4.3.0: real bug #57) |
    +--------------------------------------------------------+
 ```
 
 Bob IDE tasks: 1-5 cover incident 001 (intake, root-cause trace, fix proposal,
 verify, incident report); 6-8 and 9-11 repeat the trace-propose-report loop
-for incidents 002 and 003, with fixes proposed only, never applied.
+for incidents 002 and 003, with fixes proposed only, never applied. Tasks
+12-16 run the full loop on a REAL bug — humanize issue #57 (vendored 4.3.0) —
+with the fix applied to the vendored copy, verified, and compared against the
+actual upstream fix.
 
 ## Quickstart
 
@@ -102,7 +106,7 @@ print('report:', r['report_path'])
 streamlit run triage/app.py
 ```
 
-## The Bob workflow (11 tasks)
+## The Bob workflow (16 tasks)
 
 In Bob IDE, on the **hackathon-provisioned account**, run the prompts in
 `prompts/bob_tasks.md` in order.
@@ -118,6 +122,12 @@ In Bob IDE, on the **hackathon-provisioned account**, run the prompts in
 **Incidents 002/003** (tasks 6-11) — root-cause trace, fix proposal, and
 incident report for each. Fixes are proposed only, never applied, so the
 live suite honestly stays at 7 passed / 2 failed.
+
+**Incident 004** (tasks 12-16) — the same loop on real-world code: intake on
+the billing-worker alert, root-cause trace of `humanize.metric(0)` in the
+vendored humanize 4.3.0, a fix proposed *without* seeing the upstream fix,
+the fix applied to the vendored copy and verified with the reproducer, and a
+final report comparing Bob's fix against the actual upstream fix (PR #47).
 
 Screenshot each task's session consumption summary into `bob_sessions/`
 (see `bob_sessions/README.md`).
@@ -146,9 +156,10 @@ this repo, not on production outages.
 ## Repo map
 
 - `victim-service/` — the sample FastAPI app with 3 seeded bugs + pytest suite
+- `triage/realworld/` — vendored humanize 4.3.0 (real bug: issue #57) + reproducer
 - `triage/` — `triage_core.py` (deterministic pipeline), `app.py` (Streamlit demo UI)
-- `incidents/` — 3 synthetic incident payloads (alert JSON + logs each)
-- `prompts/bob_tasks.md` — the 11 Bob IDE task prompts
+- `incidents/` — 4 incident payloads (alert JSON + logs each; 001–003 synthetic, 004 real-world)
+- `prompts/bob_tasks.md` — the 16 Bob IDE task prompts
 - `bob_sessions/` — Bob task session screenshots (required deliverable)
 - `DEMO_SCRIPT.md` — 3-minute video plan
 - `STATEMENTS.md` — submission statements: problem/solution and IBM Bob usage

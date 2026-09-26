@@ -8,7 +8,7 @@ are produced in IBM Bob IDE (see prompts/bob_tasks.md) and are picked up
 from triage/reports/ and triage/fixes/ when present.
 
 Two modes:
-  * Bundled incident — one of the three synthetic incidents shipped with the repo.
+  * Bundled incident — one of the four bundled incidents shipped with the repo (three synthetic, one real-world).
   * Custom alert — paste any alert JSON (plus optional log lines) and the
     pipeline runs live on your input. If the alert matches a known incident
     signature, Bob's IDE-generated diagnosis for it is shown; otherwise the
@@ -43,6 +43,7 @@ INCIDENT_META = {
     "001": ("INC-2026-1042", "Crash: KeyError in apply_tax on POST /orders"),
     "002": ("INC-2026-1043", "Silent revenue leak: bulk discount applied twice"),
     "003": ("INC-2026-1044", "Config: PAYMENTS_MODE=sandbox declines all orders"),
+    "004": ("INC-2026-1045", "Real-world: humanize.metric(0) crashes (upstream issue #57)"),
 }
 
 # Prefill for the custom-alert box: guaranteed-valid example JSON.
@@ -55,7 +56,7 @@ CUSTOM_TEMPLATE = json.dumps(
 def match_known_incident(alert):
     """Match a custom alert to a bundled incident by error signature.
 
-    Returns "001"/"002"/"003" or None. Only used to surface Bob's
+    Returns "001"/"002"/"003"/"004" or None. Only used to surface Bob's
     IDE-generated artifacts for a matching known incident — never to
     invent a diagnosis.
     """
@@ -67,6 +68,8 @@ def match_known_incident(alert):
         return "002"
     if "payment" in sig:
         return "003"
+    if "math domain error" in tb:
+        return "004"
     return None
 
 
@@ -92,7 +95,7 @@ mode = st.sidebar.radio(
     "Mode",
     ["Bundled incident", "Custom alert"],
     index=0,
-    help="Bundled: one of the three synthetic incidents. Custom: paste your "
+    help="Bundled: one of the four bundled incidents. Custom: paste your "
     "own alert JSON and the pipeline runs live on it.",
 )
 
@@ -101,7 +104,7 @@ custom_logs_text = ""
 if mode == "Bundled incident":
     choice = st.sidebar.selectbox(
         "Select a bundled incident",
-        options=["001", "002", "003"],
+        options=["001", "002", "003", "004"],
         format_func=lambda k: f"{k} — {INCIDENT_META[k][1]}",
     )
     alert_id, short_title = INCIDENT_META[choice]
@@ -123,7 +126,7 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     "**Bob evidence:** every reasoning step for this demo is produced in "
-    "IBM Bob IDE. Session screenshots live in `bob_sessions/`; the eleven task "
+    "IBM Bob IDE. Session screenshots live in `bob_sessions/`; the sixteen task "
     "prompts are in `prompts/bob_tasks.md`."
 )
 
@@ -338,7 +341,7 @@ with st.expander("Bob evidence — how IBM Bob was used"):
     st.markdown(
         """
 IBM Bob (IDE, hackathon-provisioned account) is the reasoning engine of this
-workflow. The eleven Bob tasks in `prompts/bob_tasks.md`:
+workflow. The sixteen Bob tasks in `prompts/bob_tasks.md`:
 
 1. **Incident intake** (Ask mode) — structured timeline + ranked hypotheses.
 2. **Root-cause trace** (Agent mode) — exact faulty code path, saved to `triage/reports/`.
@@ -348,7 +351,9 @@ workflow. The eleven Bob tasks in `prompts/bob_tasks.md`:
 
 Tasks 1-5 cover incident 001 end to end; tasks 6-11 repeat the
 trace-propose-report loop for incidents 002 and 003, with fixes proposed
-only (never applied).
+only (never applied). Tasks 12-16 take the full loop to a real-world case:
+humanize issue #57 (vendored 4.3.0) — the fix is applied to the vendored copy,
+verified with the reproducer, then compared against the actual upstream fix.
 
 Per-task session summary screenshots are stored in `bob_sessions/` and are a
 required submission deliverable.
@@ -357,4 +362,4 @@ required submission deliverable.
     st.page_link("https://bob.ibm.com/docs", label="Bob IDE docs (external)")
 
 st.markdown("---")
-st.caption("TriageOps — built for the IBM Bob 2.0 hackathon. All incident data is synthetic.")
+st.caption("TriageOps — built for the IBM Bob 2.0 hackathon. Incidents 001–003 are synthetic; 004 is a real-world case study (humanize #57).")

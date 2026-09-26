@@ -1,8 +1,12 @@
 # IBM Bob Task Prompts
 
-The eleven Bob IDE tasks behind TriageOps' incident-triage loop, in order. Run each
+The sixteen Bob IDE tasks behind TriageOps' incident-triage loop, in order. Run each
 as a new Bob task with the repo open in Bob IDE. Session screenshots for every
 task are committed under `bob_sessions/`.
+
+Tasks 1-11 run the loop on three synthetic incidents in victim-service/.
+Tasks 12-16 run the same loop on a real-world case: a genuine bug in humanize
+4.3.0 (vendored under triage/realworld/), reported as upstream issue #57.
 
 ## Task 1 — Incident intake (Ask mode)
 
@@ -257,4 +261,144 @@ as uncertain.
 - Paste the incident JSON and logs once in Task 1; later tasks reference the
   files instead of re-pasting them.
 - Tasks 2–5 run in the same workspace so repository context stays warm.
+- Tasks 12–16 run as their own workspace session, separate from Tasks 1–11.
 - Ask mode for analysis (Task 1); Agent mode for multi-step work (Tasks 2–5).
+
+## Task 12 — Real-world incident intake (Ask mode)
+
+Turn the raw alert into a structured timeline and ranked hypotheses.
+Output: a short analysis in chat (no files). This is REAL third-party code,
+not a seeded bug — treat it like a production incident on a dependency.
+
+```
+You are helping triage a production incident. Here is the alert payload
+(incidents/incident_004.json):
+
+<paste the full contents of incidents/incident_004.json>
+
+And the correlated service logs (incidents/incident_004_logs.txt):
+
+<paste the full contents of incidents/incident_004_logs.txt>
+
+Background: our billing-worker formats invoice amounts with the humanize
+library. The exact vendored copy of humanize 4.3.0 we run is in
+triage/realworld/humanize/ (verbatim from PyPI). A minimal reproducer is
+triage/realworld/repro_metric_zero.py. The real upstream issue is
+https://github.com/python-humanize/humanize/issues/57 — you may read the
+issue for context, but do NOT look at the upstream fix yet.
+
+Produce:
+1. A minute-by-minute timeline of the incident from the logs.
+2. Three ranked root-cause hypotheses, each with the file:line evidence that
+   supports or weakens it.
+3. The single most likely root cause, stated in one sentence.
+
+Be specific: cite exact file paths, line numbers, and log line numbers.
+Do not propose a fix yet.
+```
+
+## Task 13 — Real-world root-cause trace (Agent mode)
+
+Trace the exact faulty code path in the vendored humanize 4.3.0 and save the
+analysis. Output: `triage/reports/root_cause_004.md` (rendered by the dashboard
+in Stage 4).
+
+```
+In Agent mode, working in the triage/realworld/ directory:
+
+1. Run the reproducer: python triage/realworld/repro_metric_zero.py
+   (from the repo root). Capture the full traceback.
+2. Read the faulty function in triage/realworld/humanize/number.py and trace
+   the exact code path from the metric() entry point to the crash.
+3. Explain WHY the crash happens: what mathematical operation is undefined
+   for this input, and why the function's logic reaches it.
+
+Write triage/reports/root_cause_004.md with:
+- The reproduced traceback (exact).
+- The faulty code path, step by step, with file:line references.
+- The root cause in one paragraph: which line, which operation, which input
+  value triggers it.
+- Why zero is a legitimate input here (invoice credit/refund line items).
+
+Do not propose a fix yet. Do not look at the upstream fix.
+```
+
+## Task 14 — Real-world fix proposal (Agent mode)
+
+Propose a minimal fix for the vendored humanize 4.3.0 WITHOUT looking at the
+upstream fix. Output: `triage/fixes/fix_004.diff` (rendered by the dashboard
+in Stage 5).
+
+```
+In Agent mode, working in the triage/realworld/ directory:
+
+Based on triage/reports/root_cause_004.md, propose the smallest safe fix to
+triage/realworld/humanize/number.py that:
+1. Stops the crash for the triggering input.
+2. Returns a sensible formatted result for it (follow the function's existing
+   formatting conventions — check what the function returns for nearby inputs).
+3. Changes no behavior for any other input.
+
+Write the fix as a unified diff to triage/fixes/fix_004.diff, and in chat
+explain: the one-line change, why this input value is special, and what the
+function now returns for it. Then STOP — do not apply it yet, and do not
+look at the upstream fix.
+```
+
+## Task 15 — Apply fix to vendored copy and verify (Agent mode)
+
+Apply Bob's fix, verify with the reproducer, and run sanity checks.
+Output: chat summary of before/after (no new files besides the modified
+vendored copy).
+
+```
+In Agent mode, working in the triage/realworld/ directory:
+
+1. Apply triage/fixes/fix_004.diff to triage/realworld/humanize/number.py.
+2. Re-run the reproducer: python triage/realworld/repro_metric_zero.py
+   (from the repo root). Confirm the crash is gone and record the output.
+3. Sanity-check neighboring behavior (all must be unchanged and correct):
+   - number.metric(1500, "V")      -> '1.50 kV'
+   - number.metric(0, "V")         -> sensible zero formatting with unit
+   - number.metric(220e-6, "F")    -> '220 μF'
+   - number.metric(1e40)           -> scientific fallback '1.00 x 10⁴⁰'
+   - number.metric(-5)             -> negative values still work
+4. Report the before/after: the exact crash before, the exact output after,
+   and the sanity-check results. If anything is off, iterate on the fix and
+   update triage/fixes/fix_004.diff to match what was actually applied.
+```
+
+## Task 16 — Real-world incident report (Agent mode)
+
+Write the final incident report, including a comparison of Bob's fix against
+the actual upstream fix. Output:
+`triage/reports/incident_INC-2026-1045_report.md` (rendered by the dashboard
+in Stage 7).
+
+```
+In Agent mode:
+
+Write the incident report for INC-2026-1045 to
+triage/reports/incident_INC-2026-1045_report.md. Base it strictly on:
+- incidents/incident_004.json (evidence)
+- incidents/incident_004_logs.txt (evidence)
+- triage/reports/root_cause_004.md (root cause)
+- triage/fixes/fix_004.diff (Bob's fix, applied and verified in Task 15)
+
+Sections: Summary, Timeline, Evidence, Root cause, Fix applied and verified,
+Prevention suggestions. Keep it factual and under one page.
+
+Then add a final section, "Bob vs upstream": the actual upstream fix for this
+issue is public — humanize PR #47, released in 4.4.0, which changed the
+faulty line to:
+
+    exponent = int(math.floor(math.log10(abs(value)))) if value != 0 else 0
+
+Compare Bob's independently proposed fix (Task 14, written BEFORE seeing
+this) against the upstream fix: are they equivalent? Which inputs do they
+differ on, if any? State the comparison honestly — if upstream's is better,
+say so.
+
+Do not invent data that is not in the sources above; mark anything uncertain
+as uncertain.
+```
