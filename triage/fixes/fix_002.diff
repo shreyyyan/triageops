@@ -1,0 +1,74 @@
+--- a/victim-service/app.py
++++ b/victim-service/app.py
+@@ -89,9 +89,6 @@ def create_order(order: OrderIn):
+     lines = [line_subtotal(i) for i in order.items]
+-    # BUG 2: bulk discount applied at line level ...
+     lines = [apply_bulk_discount(lt, total_quantity) for lt in lines]
+     subtotal = round(sum(lines), 2)
+-    # ... and then applied a SECOND time on the order subtotal. Revenue leak.
+-    # Correct behaviour: apply the bulk discount exactly once.
+-    subtotal = apply_bulk_discount(subtotal, total_quantity)
+ 
+     tax = apply_tax(subtotal, order.region)
+
+---
+
+## Safety Rationale
+
+### What the fix does
+
+Remove three lines from `create_order` in `victim-service/app.py`:
+
+| Line | Content removed |
+|------|----------------|
+| 90 | `# BUG 2: bulk discount applied at line level ...` (comment) |
+| 93 | `# ... and then applied a SECOND time on the order subtotal. Revenue leak.` (comment) |
+| 94 | `# Correct behaviour: apply the bulk discount exactly once.` (comment) |
+| 95 | `subtotal = apply_bulk_discount(subtotal, total_quantity)` ← **only executable change** |
+
+The sole functional change is the deletion of line 95. The three comment lines are
+removed only because they exist solely to describe the bug that is being fixed; keeping
+them would leave misleading comments in production code.
+
+### Why exactly one line of logic is removed (not modified)
+
+The two existing approaches — discount per line (line 91) vs. discount on the subtotal
+(line 95) — are mathematically equivalent when applied in isolation, because:
+
+```
+sum(x_i × 0.90) == 0.90 × sum(x_i)
+```
+
+Either call alone produces the correct 10 % reduction. The RCA and the in-code comment
+both confirm that the per-line call (line 91) was written first; the subtotal call
+(line 95) is the redundant duplicate. Removing line 95 therefore:
+
+1. Keeps the discount code path that was already present and tested.
+2. Adds zero new logic — it is a pure deletion.
+3. Leaves `apply_bulk_discount` itself completely untouched.
+
+### Blast radius of the change
+
+| Scenario | Before fix | After fix |
+|----------|-----------|-----------|
+| `total_quantity > 10` | 10 % discount applied twice → effective 19 % reduction | 10 % discount applied once → correct |
+| `total_quantity == 10` | `apply_bulk_discount` returns `amount` unchanged on both calls → no compounding | identical — no discount applied |
+| `total_quantity < 10` | `apply_bulk_discount` returns `amount` unchanged on both calls → no compounding | identical — no discount applied |
+| `GET /orders/{id}` | unaffected (no call to `apply_bulk_discount`) | identical |
+| `GET /health` | unaffected | identical |
+| Tax calculation | computed on doubly-discounted subtotal | computed on correctly-discounted subtotal |
+
+No other function in `app.py` calls `apply_bulk_discount`, and no other file in
+the service imports it, so the change is entirely self-contained.
+
+### Tests that should pass after applying the fix
+
+| Test | File | Line | Status before fix | Expected after fix |
+|------|------|------|-------------------|--------------------|
+| `test_bulk_discount_applied_exactly_once` | `victim-service/tests/test_orders.py` | 91 | **FAILING** — asserts `subtotal == 108.0`; buggy code returns `97.20` | **PASS** — subtotal is `108.00` |
+| `test_bulk_threshold_boundary_no_discount` | `victim-service/tests/test_orders.py` | 115 | PASSING — exactly 10 units → no discount; double-application of a no-op is still a no-op | **remains PASS** — behaviour unchanged |
+| `test_create_order_happy_path` | `victim-service/tests/test_orders.py` | 42 | PASSING — low-quantity order, discount never triggered | **remains PASS** |
+| `test_get_order_roundtrip` | `victim-service/tests/test_orders.py` | 53 | PASSING | **remains PASS** |
+
+`test_bulk_discount_applied_exactly_once` is currently **failing** and will turn green
+after this patch. All other tests are already passing and must remain green.
