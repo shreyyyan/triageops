@@ -80,10 +80,10 @@ produces an honestly-labelled draft report — it never invents a diagnosis.
    | 7-stage demo UI      |<-------->|                        |
    +----------------------+  files   |                        |
                                      |                        |
-   +--------------------------------+                        |
-   | victim-service/  (FastAPI app with 3 seeded bugs)      |
-| triage/realworld/ (vendored humanize 4.3.0: real bug #57) |
-   +--------------------------------------------------------+
+   +-----------------------------------------------------------+
+   | victim-service/  (FastAPI app with 3 seeded bugs)         |
+   | triage/realworld/ (vendored humanize 4.3.0: real bug #57) |
+   +-----------------------------------------------------------+
 ```
 
 Bob IDE tasks: 1-5 cover incident 001 (intake, root-cause trace, fix proposal,
