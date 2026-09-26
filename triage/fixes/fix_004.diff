@@ -1,0 +1,66 @@
+--- a/triage/realworld/humanize/number.py
++++ b/triage/realworld/humanize/number.py
+@@ -509,6 +509,8 @@ def metric(value: float, unit: str = "", precision: int = 3) -> str:
+     Returns:
+         str:
+     """
++    if value == 0:
++        return format(0, ".%if" % (precision - 1)) + (" " if unit and unit not in ("°", "′", "″") else "") + unit
+     exponent = int(math.floor(math.log10(abs(value))))
+
+---
+
+## The One-Line Change
+
+Insert a two-line early-return guard immediately before the crash site on
+`number.py` line 511.
+
+| Line(s) | Before | After |
+|---------|--------|-------|
+| 511 (before) | `exponent = int(math.floor(math.log10(abs(value))))` — first statement, no guard | unchanged — still runs for every non-zero value |
+| **511 (new)** | *(absent)* | `if value == 0:` |
+| **512 (new)** | *(absent)* | `    return format(0, ".%if" % (precision - 1)) + (" " if unit and unit not in ("°", "′", "″") else "") + unit` |
+
+The sole executable addition is the two-line guard.  Everything from the
+original line 511 onward is **completely unchanged**.
+
+---
+
+## Why `0` Is Special
+
+`math.log10` is defined only on the **strictly positive** reals (domain
+`(0, +∞)`).  `log₁₀(0) = −∞`, which cannot be represented as a finite float,
+so CPython's `math` module raises `ValueError: expected a positive input`
+whenever the argument is `0`.  Because `abs(0) == 0`, the very first statement
+of `metric()` crashes unconditionally for this input — no subsequent line is
+ever reached.
+
+For every other value the absolute value is positive, `math.log10` succeeds,
+and the rest of the function runs normally.  Zero is the unique boundary case.
+
+---
+
+## What the Function Now Returns for `metric(0)`
+
+The guard mirrors the formatting convention used by the existing code for
+values in the `1 ≤ |value| < 1000` range (exponent 0, 1, or 2), where
+`ordinal = ""` and `precision - 1` decimal places are used:
+
+| Call | Return value | Notes |
+|------|--------------|-------|
+| `metric(0)` | `"0.00"` | `precision=3` → 2 decimal places, no unit |
+| `metric(0, "V")` | `"0.00 V"` | space inserted before the unit |
+| `metric(0, "°")` | `"0.00°"` | degree symbol — no space, matching existing rule |
+| `metric(0, unit="W", precision=4)` | `"0.000 W"` | `precision=4` → 3 decimal places |
+
+`"0.00"` is consistent with what the function returns for nearby inputs such
+as `metric(1)` → `"1.00"` and `metric(0.001, "V")` → `"1.00 mV"`.
+
+---
+
+## Why No Other Input Is Affected
+
+The guard is gated on `value == 0`.  For any non-zero `value`, `abs(value) > 0`
+and `math.log10` succeeds; the new `if` branch is skipped and execution falls
+through to the original line 511 unchanged.  Negative values, very large values,
+very small values, and the `scientific()` fallback path are all unaffected.

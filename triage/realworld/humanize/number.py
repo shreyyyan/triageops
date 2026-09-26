@@ -508,6 +508,8 @@ def metric(value: float, unit: str = "", precision: int = 3) -> str:
     Returns:
         str:
     """
+    if value == 0:
+        return format(0, ".%if" % (precision - 1)) + (" " if unit and unit not in ("°", "′", "″") else "") + unit
     exponent = int(math.floor(math.log10(abs(value))))
 
     if exponent >= 27 or exponent < -24:
