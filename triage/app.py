@@ -179,7 +179,7 @@ if st.session_state.triage_run:
         )
         matches = []
     else:
-        matches = correlate_logs(logs_path, alert["error_signature"])
+        matches = correlate_logs(logs_path, alert["error_signature"], alert=alert)
         st.write(f"**{len(matches)} matching log line(s)** around the incident window.")
         with st.expander("Show correlated log lines", expanded=True):
             for m in matches[:10]:

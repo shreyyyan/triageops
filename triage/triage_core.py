@@ -62,36 +62,76 @@ def parse_alert(incident_json):
     }
 
 
-def correlate_logs(log_path, signature, context=2):
-    """Find log lines matching an error signature, with surrounding context.
+LOG_TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})Z?")
+
+
+def _parse_log_ts(line):
+    """Parse an ISO-8601 timestamp at the start of a log line (assumed UTC)."""
+    m = LOG_TS_RE.match(line.strip())
+    if not m:
+        return None
+    try:
+        return datetime.fromisoformat(m.group(1)).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def correlate_logs(log_path, signature, context=2, alert=None):
+    """Find log lines matching an incident, with surrounding context.
 
     Returns a list of dicts: {line_no, line, context_before, context_after}.
-    A line matches if it contains the signature, or if it belongs to a
-    traceback block that follows a matching line.
+    A line matches if it contains the error signature or the alert ID, if it
+    belongs to a traceback block that follows a matching line, or - when the
+    parsed alert is supplied - if it mentions the alert's endpoint or service
+    within a 15-minute window of the alert timestamp.
     """
     path = Path(log_path)
     lines = path.read_text(encoding="utf-8").splitlines()
     matches = []
     in_traceback = False
 
+    alert_id = ""
+    endpoint_path = ""
+    service = ""
+    alert_ts = None
+    if alert:
+        alert_id = alert.get("alert_id") or ""
+        service = alert.get("service") or ""
+        parts = (alert.get("endpoint") or "").split()
+        endpoint_path = parts[-1] if parts else ""
+        try:
+            alert_ts = datetime.fromisoformat(
+                (alert.get("timestamp") or "").replace("Z", "+00:00")
+            )
+            if alert_ts.tzinfo is None:
+                alert_ts = alert_ts.replace(tzinfo=timezone.utc)
+        except ValueError:
+            alert_ts = None
+
     for i, line in enumerate(lines):
-        hit = signature in line
+        hit = signature in line or (alert_id and alert_id in line)
         if "Traceback (most recent call last)" in line:
             in_traceback = True
-        if hit or (in_traceback and line.strip() != ""):
+        related = False
+        if not hit and alert_ts is not None:
+            ts = _parse_log_ts(line)
+            if ts is not None and abs((ts - alert_ts).total_seconds()) <= 900:
+                if (endpoint_path and endpoint_path in line) or (
+                    service and service in line
+                ):
+                    related = True
+        if hit or related or (in_traceback and line.strip() != ""):
             matches.append(
                 {
                     "line_no": i + 1,
                     "line": line,
-                    "context_before": lines[max(0, i - context): i],
-                    "context_after": lines[i + 1: i + 1 + context],
+                    "context_before": lines[max(0, i - context) : i],
+                    "context_after": lines[i + 1 : i + 1 + context],
                 }
             )
         if in_traceback and line.strip() == "":
             in_traceback = False
-
     return matches
-
 
 def locate_code(repo_path, traceback_text):
     """Parse Python traceback frames into file:line references.
@@ -276,7 +316,7 @@ def run_pipeline(incident_json, logs_txt, repo_path, reports_dir=None):
 
     alert = parse_alert(incident_json)
     repo_abs = str(Path(repo_path).resolve())
-    log_matches = correlate_logs(logs_txt, alert["error_signature"])
+    log_matches = correlate_logs(logs_txt, alert["error_signature"], alert=alert)
     code_locations = locate_code(repo_abs, alert.get("traceback") or "")
     test_results = run_tests(repo_abs)
 
